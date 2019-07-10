@@ -1,0 +1,4 @@
+framework module SwiftSVG {
+  header "SwiftSVG-Swift.h"
+  requires objc
+}
