@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		A505703C2249226F0032849A /* digital-7.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A505703B2249226F0032849A /* digital-7.ttf */; };
 		A5057040224938EE0032849A /* SourceCodePro-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A505703F224938ED0032849A /* SourceCodePro-Light.ttf */; };
-		A5057044224AB0D70032849A /* ChartScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = A5057043224AB0D70032849A /* ChartScene.sks */; };
 		A53A784322CE057F005975E8 /* FilterTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784222CE057F005975E8 /* FilterTVCell.swift */; };
 		A53A784522CE0CD0005975E8 /* FilterTFTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784422CE0CD0005975E8 /* FilterTFTVCell.swift */; };
 		A53A784722CE0CF2005975E8 /* FilterButtonTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784622CE0CF2005975E8 /* FilterButtonTVCell.swift */; };
@@ -242,7 +241,6 @@
 /* Begin PBXFileReference section */
 		A505703B2249226F0032849A /* digital-7.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "digital-7.ttf"; path = "../../../../../Downloads/digital-7/digital-7.ttf"; sourceTree = "<group>"; };
 		A505703F224938ED0032849A /* SourceCodePro-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SourceCodePro-Light.ttf"; path = "../../../../../Downloads/source-code-pro-2.010R-ro-1.030R-it/TTF/SourceCodePro-Light.ttf"; sourceTree = "<group>"; };
-		A5057043224AB0D70032849A /* ChartScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = ChartScene.sks; sourceTree = "<group>"; };
 		A53A784222CE057F005975E8 /* FilterTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterTVCell.swift; sourceTree = "<group>"; };
 		A53A784422CE0CD0005975E8 /* FilterTFTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterTFTVCell.swift; sourceTree = "<group>"; };
 		A53A784622CE0CF2005975E8 /* FilterButtonTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterButtonTVCell.swift; sourceTree = "<group>"; };
@@ -490,6 +488,7 @@
 		A50570372247D4700032849A /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				A5FC7BF42280A8A6004CC6F0 /* OptionsChooserVC.swift */,
 				A5630BF6223912FE002B0152 /* Util.swift */,
 				A5630BFC223A612A002B0152 /* WebSocket.swift */,
 				A5B7EEC1223D3DA100061811 /* AlwaysPresentAsPopover.swift */,
@@ -504,6 +503,29 @@
 				A505703B2249226F0032849A /* digital-7.ttf */,
 			);
 			path = Fonts;
+			sourceTree = "<group>";
+		};
+		A55ECBD022D736ED00C2288A /* Scanner */ = {
+			isa = PBXGroup;
+			children = (
+				A5FC7BEE228023B9004CC6F0 /* ScannerVC.swift */,
+				A5FC7BF022803E39004CC6F0 /* ScannerSettingsVC.swift */,
+				A53A784822CE0E7F005975E8 /* FilterSettingsVC.swift */,
+				A5FC7BF62281B8EA004CC6F0 /* ScannerFilter.swift */,
+			);
+			path = Scanner;
+			sourceTree = "<group>";
+		};
+		A55ECBD122D737A700C2288A /* List */ = {
+			isa = PBXGroup;
+			children = (
+				A5630BEA2237E5F1002B0152 /* ListTVC.swift */,
+				A5BE57662268F21200E4EE09 /* SortOptionsVC.swift */,
+				A56B86D3226C713D003B153B /* ChooseListVC.swift */,
+				A5B1DCDE226F809D0084B82D /* CreateListVC.swift */,
+				A5D157B7223E6E8600D583D7 /* AddSymbolsTVC.swift */,
+			);
+			path = List;
 			sourceTree = "<group>";
 		};
 		A5630BCA2237D16F002B0152 = {
@@ -526,42 +548,29 @@
 		A5630BD52237D16F002B0152 /* Binance+ */ = {
 			isa = PBXGroup;
 			children = (
-				A5FC7C022288266F004CC6F0 /* coin icons */,
+				A5FC7C022288266F004CC6F0 /* Coin Icons */,
 				A5057038224921870032849A /* Fonts */,
 				A50570372247D4700032849A /* Utility */,
 				A5BE575F2268C0C300E4EE09 /* Custom Views */,
 				A5B7EEC9223D906700061811 /* TableCells */,
 				A577308122789F0A00C08158 /* Chart */,
+				A55ECBD022D736ED00C2288A /* Scanner */,
+				A55ECBD122D737A700C2288A /* List */,
 				A5630BD62237D16F002B0152 /* AppDelegate.swift */,
 				A5630BDA2237D16F002B0152 /* Main.storyboard */,
 				A589D8832258A9C2008C98C3 /* LaunchVC.swift */,
 				A5F4EFFF226E2598002EEBD2 /* ParentVC.swift */,
 				A5630BD82237D16F002B0152 /* TabBarVC.swift */,
-				A5630BEA2237E5F1002B0152 /* ListTVC.swift */,
-				A5630BF02238F628002B0152 /* ChartVC.swift */,
-				A5496A0D22B6C1510091F996 /* IndicatorsVC.swift */,
-				A5496A1B22B78B4E0091F996 /* IndicatorSettingsVC.swift */,
-				A5BE57662268F21200E4EE09 /* SortOptionsVC.swift */,
-				A56B86D3226C713D003B153B /* ChooseListVC.swift */,
-				A5B1DCDE226F809D0084B82D /* CreateListVC.swift */,
-				A5BE57592268798300E4EE09 /* LaunchScene.swift */,
-				A5FC7BF42280A8A6004CC6F0 /* OptionsChooserVC.swift */,
-				A5BA606B22B813BB001924F6 /* ColorPalletCVC.swift */,
-				A5D157B7223E6E8600D583D7 /* AddSymbolsTVC.swift */,
-				A564CC4122CA398500B0C14B /* ChartSymbolVC.swift */,
-				A5FC7BEE228023B9004CC6F0 /* ScannerVC.swift */,
-				A5FC7BF022803E39004CC6F0 /* ScannerSettingsVC.swift */,
-				A53A784822CE0E7F005975E8 /* FilterSettingsVC.swift */,
 				A5630BDD2237D171002B0152 /* Assets.xcassets */,
 				A5630BDF2237D171002B0152 /* LaunchScreen.storyboard */,
 				A5630BE22237D171002B0152 /* Info.plist */,
 				A5D157DD2241399800D583D7 /* App.swift */,
-				A5FC7BF62281B8EA004CC6F0 /* ScannerFilter.swift */,
 				A5630BEC2237E649002B0152 /* BinanceApi.swift */,
 				A59AD5F52258FE290024525E /* CryptoIconsApi.swift */,
 				A5630BEE2237F083002B0152 /* Symbol.swift */,
 				A5630BF22238F6F6002B0152 /* Enums.swift */,
 				A5B7EEBB223C0BF000061811 /* List.swift */,
+				A5BE57592268798300E4EE09 /* LaunchScene.swift */,
 			);
 			path = "Binance+";
 			sourceTree = "<group>";
@@ -569,6 +578,11 @@
 		A577308122789F0A00C08158 /* Chart */ = {
 			isa = PBXGroup;
 			children = (
+				A5630BF02238F628002B0152 /* ChartVC.swift */,
+				A5496A0D22B6C1510091F996 /* IndicatorsVC.swift */,
+				A5496A1B22B78B4E0091F996 /* IndicatorSettingsVC.swift */,
+				A5BA606B22B813BB001924F6 /* ColorPalletCVC.swift */,
+				A564CC4122CA398500B0C14B /* ChartSymbolVC.swift */,
 				A577308A2279820A00C08158 /* Chart.swift */,
 				A5FC7D4F2289880D004CC6F0 /* MainView.swift */,
 				A5FC7D51228988AF004CC6F0 /* ValueView.swift */,
@@ -612,14 +626,13 @@
 		A5BE575F2268C0C300E4EE09 /* Custom Views */ = {
 			isa = PBXGroup;
 			children = (
-				A5057043224AB0D70032849A /* ChartScene.sks */,
 				A5BE575B2268BE3300E4EE09 /* ListTitleView.xib */,
 				A5BE575D2268C0B700E4EE09 /* ListTitleView.swift */,
 			);
 			path = "Custom Views";
 			sourceTree = "<group>";
 		};
-		A5FC7C022288266F004CC6F0 /* coin icons */ = {
+		A5FC7C022288266F004CC6F0 /* Coin Icons */ = {
 			isa = PBXGroup;
 			children = (
 				A564CC4322CB648C00B0C14B /* phb.png */,
@@ -794,7 +807,7 @@
 				A5FC7CA622882670004CC6F0 /* storm.png */,
 				A5FC7CA722882670004CC6F0 /* snt.png */,
 			);
-			path = "coin icons";
+			path = "Coin Icons";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -973,7 +986,6 @@
 				A5FC7D3A22882670004CC6F0 /* bts.png in Resources */,
 				A5FC7D2D22882670004CC6F0 /* bat.png in Resources */,
 				A5FC7CF422882670004CC6F0 /* dent.png in Resources */,
-				A5057044224AB0D70032849A /* ChartScene.sks in Resources */,
 				A5FC7D4022882670004CC6F0 /* lun.png in Resources */,
 				A5FC7D1F22882670004CC6F0 /* elf.png in Resources */,
 				A5FC7D2E22882670004CC6F0 /* btt.png in Resources */,
