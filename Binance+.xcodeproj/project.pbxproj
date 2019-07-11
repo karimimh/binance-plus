@@ -557,13 +557,9 @@
 				A5630BE22237D171002B0152 /* Info.plist */,
 				A5D157DD2241399800D583D7 /* App.swift */,
 				A5FC7BF62281B8EA004CC6F0 /* ScannerFilter.swift */,
-				A5FC7BFC22840CBB004CC6F0 /* Indicator.swift */,
-				A5FC7BFA22830F3F004CC6F0 /* Indicators.swift */,
 				A5630BEC2237E649002B0152 /* BinanceApi.swift */,
 				A59AD5F52258FE290024525E /* CryptoIconsApi.swift */,
-				A5FC7D4D228826B7004CC6F0 /* QuickChart.swift */,
 				A5630BEE2237F083002B0152 /* Symbol.swift */,
-				A5630BF42238F94E002B0152 /* Candle.swift */,
 				A5630BF22238F6F6002B0152 /* Enums.swift */,
 				A5B7EEBB223C0BF000061811 /* List.swift */,
 			);
@@ -578,6 +574,10 @@
 				A5FC7D51228988AF004CC6F0 /* ValueView.swift */,
 				A5FC7BEC227B0705004CC6F0 /* TimeView.swift */,
 				A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */,
+				A5FC7BFC22840CBB004CC6F0 /* Indicator.swift */,
+				A5FC7BFA22830F3F004CC6F0 /* Indicators.swift */,
+				A5FC7D4D228826B7004CC6F0 /* QuickChart.swift */,
+				A5630BF42238F94E002B0152 /* Candle.swift */,
 			);
 			path = Chart;
 			sourceTree = "<group>";
