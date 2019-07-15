@@ -25,13 +25,13 @@ class LaunchVC: UIViewController {
         connect {
             if let savedApp = self.loadApp() {
                 self.app = savedApp
-                for symbol in self.app.allBinanceSymbols {
-                    if let image = UIImage(named: symbol.baseAsset.lowercased() + ".png") {
-                        symbol.iconImage = image
-                    } else {
-                        symbol.iconImage = UIImage()
-                    }
-                }
+//                for symbol in self.app.allBinanceSymbols {
+//                    if let image = UIImage(named: symbol.baseAsset.lowercased() + ".png") {
+//                        symbol.iconImage = image
+//                    } else {
+//                        symbol.iconImage = UIImage()
+//                    }
+//                }
                 self.presentTheViewController()
             } else {
                 self.app = App()

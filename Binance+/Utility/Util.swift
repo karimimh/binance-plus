@@ -113,7 +113,21 @@ extension Decimal {
     var stringValue: String {
         return NSDecimalNumber(decimal: self).stringValue
     }
+    var significantFractionalDecimalDigits: Int {
+        return max(-exponent, 0)
+    }
+    func formattedWith(fractionDigitCount: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.minimumFractionDigits = fractionDigitCount
+        formatter.numberStyle = .decimal
+        formatter.currencyGroupingSeparator = ""
+        formatter.maximumFractionDigits = fractionDigitCount
+        formatter.currencySymbol = ""
+        let str = formatter.string(from: self as NSNumber)!
+        return str
+    }
 }
+
 
 extension UIView {
     func takeScreenshot() -> UIImage? {

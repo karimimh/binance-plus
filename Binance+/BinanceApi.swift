@@ -6,7 +6,7 @@
 //  Copyright © 1397 AP Behnam Karimi. All rights reserved.
 //
 
-import Foundation
+import UIKit
 import Network
 
 class BinanaceApi {
@@ -210,12 +210,16 @@ class BinanaceApi {
                 completion(nil)
             }
         }
-        
+        webSocket.event.open = {
+            if let delegate = UIApplication.shared.delegate as? AppDelegate {
+                delegate.webSocket = webSocket
+            }
+        }
     }
     
     
     static func symbolMiniTickerStream(symbol: Symbol, completion: @escaping ([String: Any]?) -> Void) {
-        let url = "wss://stream.binance.com:9443/ws/" + symbol.name + "@miniTicker"
+        let url = "wss://stream.binance.com:9443/ws/" + symbol.name.lowercased() + "@miniTicker"
         let webSocket = WebSocket(url)
         webSocket.event.message = { msg in
             guard let message = msg as? String  else {
@@ -321,6 +325,33 @@ class BinanaceApi {
         task.resume()
     }
     
-    
+    static func candlestickStream(symbolName: String, timeframe: Timeframe, completion: @escaping ([String: Any]?) -> Void) {
+        if let delegate = UIApplication.shared.delegate as? AppDelegate {
+            delegate.candleWebSocket?.close()
+            delegate.candleWebSocket = nil
+        }
+        let url = "wss://stream.binance.com:9443/ws/\(symbolName.lowercased())@kline_\(timeframe.rawValue)"
+        let webSocket = WebSocket(url)
+        webSocket.event.message = { msg in
+            guard let message = msg as? String  else {
+                return
+            }
+            
+            do {
+                if let json = try JSONSerialization.jsonObject(with: message.data(using: .utf8)!, options: []) as? [String: Any] {
+                    completion(json)
+                } else {
+                    completion(nil)
+                }
+            } catch {
+                completion(nil)
+            }
+        }
+        webSocket.event.open = {
+            if let delegate = UIApplication.shared.delegate as? AppDelegate {
+                delegate.candleWebSocket = webSocket
+            }
+        }
+    }
     
 }

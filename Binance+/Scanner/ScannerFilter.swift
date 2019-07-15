@@ -56,6 +56,8 @@ class ScannerFilter {
             properties[Indicator.PropertyKey.length] = 14
             relationship = .lessThan
             rValue = Decimal(30)
+        case .rsi_divergence:
+            properties[Indicator.PropertyKey.length] = 14
         case .green_candle:
             rValue = 0
         }
@@ -87,6 +89,8 @@ class ScannerFilter {
             return "MACD_Signal(\(properties[Indicator.PropertyKey.fastLength] as! Int), \(properties[Indicator.PropertyKey.slowLength] as! Int), \(properties[Indicator.PropertyKey.signalSmoothingLength] as! Int)) \(relationship.toString()) \(rValue) ; [\(timeframe.rawValue)]"
         case .rsi:
             return "RSI(\(properties[Indicator.PropertyKey.length] as! Int)) \(relationship.toString()) \(rValue) ; [\(timeframe.rawValue)]"
+        case .rsi_divergence:
+            return "RSI Divergence(\(properties[Indicator.PropertyKey.length] as! Int)) ; [\(timeframe.rawValue)]"
         case .green_candle:
             return "Close - Open \(relationship.toString()) \(rValue) ; [\(timeframe.rawValue)]"
         }
@@ -99,6 +103,7 @@ class ScannerFilter {
         case relative_volume = "Relative Volume"
         case price = "Latest Price"
         case rsi = "Relative Strength Index"
+        case rsi_divergence = "RSI Divergence"
         case macd_bar = "MACD Bar"
         case macd_line = "MACD Line"
         case macd_signal = "MACD Signal"
@@ -108,7 +113,7 @@ class ScannerFilter {
         case green_candle = "Close - Open"
         
         static func allTypes() -> [String] {
-            return ["24 Hour Volume", "Average Volume", "Relative Volume", "Latest Price", "Relative Strength Index", "MACD Bar", "MACD Line", "MACD Signal", "upperBollBand - closePrice", "lowerBollBand - closePrice", "EMA1 - EMA2", "Close - Open"]
+            return ["24 Hour Volume", "Average Volume", "Relative Volume", "Latest Price", "Relative Strength Index", "RSI Divergence", "MACD Bar", "MACD Line", "MACD Signal", "upperBollBand - closePrice", "lowerBollBand - closePrice", "EMA1 - EMA2", "Close - Open"]
         }
     }
     

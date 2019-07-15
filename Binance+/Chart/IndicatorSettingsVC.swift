@@ -631,6 +631,9 @@ class IndicatorSettingsVC: UIViewController, UITableViewDelegate, UITableViewDat
      }
     
     func apply() {
+        if let indicator = self.indicator {
+            indicator.calculateIndicatorValue(candles: chartVC.chart.candles)
+        }
         self.chartVC.app.save()
         chartVC.chart.update()
     }

@@ -44,7 +44,7 @@ class FilterSettingsVC: UIViewController, UITableViewDelegate, UITableViewDataSo
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         guard let filter = self.filter else { return 0 }
         switch filter.type {
-        case .volume24h, .price:
+        case .volume24h, .price, .rsi_divergence:
             return 2
         case .green_candle:
             return 3
@@ -434,6 +434,36 @@ class FilterSettingsVC: UIViewController, UITableViewDelegate, UITableViewDataSo
                         filter.rValue = v
                     }
                     cell.rightTextField.text = filter.rValue.stringValue
+                }
+                cell.textFieldStartedEditing = {
+                    self.currentTextField = cell.rightTextField
+                }
+                cell.textFieldResignedCompletion = {
+                    self.currentTextField = nil
+                }
+                return cell
+            } else {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "FilterButtonTVCell") as! FilterButtonTVCell
+                cell.leftLabel.text = "Timeframe"
+                cell.rightButton.setTitle(filter.timeframe.rawValue, for: .normal)
+                cell.buttonPressedAction = {
+                    self.parentVC.slideUpOptionsChooser(options: Timeframe.allValues(), title: "Select option", completion: { (index) in
+                        filter.timeframe = Timeframe(rawValue: Timeframe.allValues()[index])!
+                        cell.rightButton.setTitle(filter.timeframe.rawValue, for: .normal)
+                    })
+                }
+                return cell
+            }
+        case .rsi_divergence:
+            if row == 0 {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "FilterTFTVCell") as! FilterTFTVCell
+                cell.leftLabel.text = "RSI Length"
+                cell.rightTextField.text = String(filter.properties[Indicator.PropertyKey.length] as! Int)
+                cell.newTextCompletion = { (text) in
+                    if let v = Int(text) {
+                        filter.properties[Indicator.PropertyKey.length] = v
+                    }
+                    cell.rightTextField.text = String(filter.properties[Indicator.PropertyKey.length] as! Int)
                 }
                 cell.textFieldStartedEditing = {
                     self.currentTextField = cell.rightTextField

@@ -9,10 +9,10 @@
 import UIKit
 
 class TimeView: UIView {
-    var allPossibleTimeTicks = [[Int]]()
-    var candles: [Candle]! {
+    
+    var visibleCandles: [Candle] {
         get {
-            return chart.candles
+            return chart.visibleCandles
         }
     }
     var chart: Chart
@@ -28,8 +28,6 @@ class TimeView: UIView {
     }
     
     var ticks = Set<Int>()
-    var mainTicksIndex: Int = 3// use later (maybe, i d k!)
-    
     
     //for grids:
     var gridCandles = [Candle]()
@@ -41,8 +39,6 @@ class TimeView: UIView {
         self.backgroundColor = .white
         clipsToBounds = true
         
-        calculateAllPossibleTimeTicks()
-        findTimeTicks(frame)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -53,8 +49,9 @@ class TimeView: UIView {
     //MARK: - DRAW
     override func draw(_ rect: CGRect) {
         super.draw(rect)
-        
-        findTimeTicks(rect)
+        let visibleCandles = self.visibleCandles
+        if visibleCandles.isEmpty { return }
+        findTicks()
         gridCandles.removeAll()
         
         let ctx = UIGraphicsGetCurrentContext()!
@@ -65,18 +62,9 @@ class TimeView: UIView {
         
         var stringRects = [CGRect]()
         for tick in ticks {
-            let candle = candles[tick]
-            if candle.x < 0 || candle.x > rect.width { continue }
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .center
+            let candle = visibleCandles[tick]
             
-            let attributes = [
-                NSAttributedString.Key.paragraphStyle: paragraphStyle,
-                NSAttributedString.Key.font: UIFont.systemFont(ofSize: 11.0),
-                NSAttributedString.Key.foregroundColor: UIColor.black
-            ]
-            
-            let string = NSAttributedString(string: tickToText(tick: tick), attributes: attributes)
+            let string = getTickAttributedString(text: tickToText(tick: tick))
             let stringSize = string.size()
             let stringRect = CGRect(x: candle.x - stringSize.width / 2, y: stringSize.height, width: stringSize.width, height: stringSize.height)
             
@@ -99,10 +87,7 @@ class TimeView: UIView {
             string.draw(in: stringRect)
             gridCandles.append(candle)
         }
-        chart.mainView.update()
-        for iv in chart.indicatorViews {
-            iv.update()
-        }
+        chart.drawGridLines()
     }
     
     func update() {
@@ -111,67 +96,21 @@ class TimeView: UIView {
     
 
     
-    private func findTimeTicks(_ rect: CGRect) {
+    
+    
+    
+    
+    
+    
+    
+    func findTicks() {
         ticks.removeAll()
-        if rect == .zero { return }
-        let timeframesToMinutes: [Int] = [Timeframe.monthly.toMinutes() * 12 * 10, Timeframe.monthly.toMinutes() * 12 * 5, Timeframe.monthly.toMinutes() * 12 * 2, Timeframe.monthly.toMinutes() * 12, Timeframe.monthly.toMinutes() * 6, Timeframe.monthly.toMinutes() * 4, Timeframe.monthly.toMinutes() * 3, Timeframe.monthly.toMinutes() * 2, Timeframe.monthly.toMinutes(), Timeframe.daily.toMinutes() * 15, Timeframe.daily.toMinutes() * 10, Timeframe.daily.toMinutes() * 5, Timeframe.daily.toMinutes() * 3, Timeframe.daily.toMinutes() * 2, Timeframe.daily.toMinutes(), Timeframe.twelveHourly.toMinutes(), Timeframe.sixHourly.toMinutes(), Timeframe.fourHourly.toMinutes(), Timeframe.hourly.toMinutes() * 3, Timeframe.twoHourly.toMinutes(), Timeframe.hourly.toMinutes(), Timeframe.thirtyMinutes.toMinutes(), Timeframe.fifteenMinutes.toMinutes(), Timeframe.oneMinute.toMinutes() * 10, Timeframe.fiveMinutes.toMinutes(), Timeframe.threeMinutes.toMinutes(), Timeframe.oneMinute.toMinutes() * 2, Timeframe.oneMinute.toMinutes()]
         
-        let maxNumberOfVisibleCandles = Int(rect.width / (candleWidth * 4 / 3))
-        let gapN = maxNumberOfVisibleCandles / 6
-        let gapInMinutes = gapN * timeframe.toMinutes()
+        let visibleCandles = self.visibleCandles
         
-        var index = 0
-        for i in 1..<timeframesToMinutes.count {
-            let t1 = timeframesToMinutes[i-1]
-            let t2 = timeframesToMinutes[i]
-            
-            if gapInMinutes <= t1 && gapInMinutes >= t2 {
-                index = i
-                break
-            }
-        }
-        for i in 0 ... index {
-            let array = allPossibleTimeTicks[i]
-            
-            for tick in array {
-                ticks.insert(tick)
-            }
-        }
+        let minDistance = getTickAttributedString(text: "20:30").size().width * 2.5
+        let minDistanceTimeSpan = CGFloat(timeframe.toMinutes()) * minDistance / candleWidth
         
-    }
-    
-    
-    
-    private func tickToText(tick: Int) -> String {
-        let candle = candles[tick]
-        
-        let time = candle.openTime
-        var text = ""
-        let minute = Calendar.current.component(.minute, from: time)
-        let hour = Calendar.current.component(.hour, from: time)
-        let day = Calendar.current.component(.day, from: time)
-        let month = Calendar.current.component(.month, from: time)
-        let year = Calendar.current.component(.year, from: time)
-        
-        if (minute % 60 == 0) && (hour % 24 == 0) && (day == 1) && (month == 1) {
-            text = String(year)
-        } else if (minute % 60 == 0) && (hour % 24 == 0) && (day == 1) {
-            text = Calendar.current.monthSymbols[month - 1]
-            text = String(text[text.startIndex ..< text.index(text.startIndex, offsetBy: 3)])
-        } else if (minute % 60 == 0) && (hour % 24 == 0) {
-            text = String(day)
-        } else if (minute % 60 == 0) {
-            text = String(hour) + ":00"
-        } else {
-            text = String(hour) + ":" + String(minute)
-        }
-        return text
-    }
-    
-    
-    func calculateAllPossibleTimeTicks() {
-        var _10y = [Int]()
-        var _5y = [Int]()
         var _2y = [Int]()
         var _1y = [Int]()
         var _6M = [Int]()
@@ -198,11 +137,20 @@ class TimeView: UIView {
         var _3m = [Int]()
         var _2m = [Int]()
         var _1m = [Int]()
+        let timespansInMinutes: [Int] = [Timeframe.monthly.toMinutes() * 12 * 2, Timeframe.monthly.toMinutes() * 12, Timeframe.monthly.toMinutes() * 6, Timeframe.monthly.toMinutes() * 4, Timeframe.monthly.toMinutes() * 3, Timeframe.monthly.toMinutes() * 2, Timeframe.monthly.toMinutes(), Timeframe.daily.toMinutes() * 15, Timeframe.daily.toMinutes() * 10, Timeframe.daily.toMinutes() * 5, Timeframe.daily.toMinutes() * 3, Timeframe.daily.toMinutes() * 2, Timeframe.daily.toMinutes(), Timeframe.twelveHourly.toMinutes(), Timeframe.sixHourly.toMinutes(), Timeframe.fourHourly.toMinutes(), Timeframe.hourly.toMinutes() * 3, Timeframe.twoHourly.toMinutes(), Timeframe.hourly.toMinutes(), Timeframe.thirtyMinutes.toMinutes(), Timeframe.fifteenMinutes.toMinutes(), Timeframe.oneMinute.toMinutes() * 10, Timeframe.fiveMinutes.toMinutes(), Timeframe.threeMinutes.toMinutes(), Timeframe.oneMinute.toMinutes() * 2, Timeframe.oneMinute.toMinutes()]
+        
+        var timeSpanIndex = 0
+        for i in 0..<timespansInMinutes.count {
+            let timespan = timespansInMinutes[i]
+            if CGFloat(timespan) > minDistanceTimeSpan {
+                timeSpanIndex = i
+            }
+        }
         
         
         
-        for i in 0..<candles.count {
-            let candle = candles[i]
+        for i in 0..<visibleCandles.count {
+            let candle = visibleCandles[i]
             let candleDate = candle.openTime
             let minute = Calendar.current.component(.minute, from: candleDate)
             let hour = Calendar.current.component(.hour, from: candleDate)
@@ -210,14 +158,8 @@ class TimeView: UIView {
             let month = Calendar.current.component(.month, from: candleDate)
             let year = Calendar.current.component(.year, from: candleDate)
             
-            //10 yr
-            if (year % 10 == 0) && (minute % 60 == 0) && (hour % 24 == 0) && (day == 1) && (month == 1) {
-                _10y.append(i)
-            }
-            //5 yr
-            if (year % 5 == 0) && (minute % 60 == 0) && (hour % 24 == 0) && (day == 1) && (month == 1) {
-                _5y.append(i)
-            }
+            
+            
             //2 yr
             if (year % 2 == 0) && (minute % 60 == 0) && (hour % 24 == 0) && (day == 1) && (month == 1) {
                 _2y.append(i)
@@ -323,9 +265,58 @@ class TimeView: UIView {
         }
         
         
-        allPossibleTimeTicks = [_10y, _5y, _2y, _1y, _6M, _4M, _3M, _2M, _1M, _15d, _10d, _5d, _3d, _2d, _1d, _12h, _6h, _4h, _3h, _2h, _1h, _30m, _15m, _10m, _5m, _3m, _2m, _1m]
+        let allPossibleTimeTicks = [_2y, _1y, _6M, _4M, _3M, _2M, _1M, _15d, _10d, _5d, _3d, _2d, _1d, _12h, _6h, _4h, _3h, _2h, _1h, _30m, _15m, _10m, _5m, _3m, _2m, _1m]
         
+        for tick in allPossibleTimeTicks[timeSpanIndex] {
+            ticks.insert(tick)
+        }
+    }
+    
+    
+    func tickToText(tick: Int) -> String {
+        let candle = visibleCandles[tick]
         
+        let time = candle.openTime
+        let timeLocal = time.utcToLocal()
+        var text = ""
+        let minute = Calendar.current.component(.minute, from: time)
+        let hour = Calendar.current.component(.hour, from: time)
+        let day = Calendar.current.component(.day, from: time)
+        let month = Calendar.current.component(.month, from: time)
+        let year = Calendar.current.component(.year, from: time)
+        let minuteL = Calendar.current.component(.minute, from: timeLocal)
+        let hourL = Calendar.current.component(.hour, from: timeLocal)
+        
+        if (minute % 60 == 0) && (hour % 24 == 0) && (day == 1) && (month == 1) {
+            text = String(year)
+        } else if (minute % 60 == 0) && (hour % 24 == 0) && (day == 1) {
+            text = Calendar.current.monthSymbols[month - 1]
+            text = String(text[text.startIndex ..< text.index(text.startIndex, offsetBy: 3)])
+        } else if (minute % 60 == 0) && (hour % 24 == 0) {
+            text = String(day)
+        } else if (minute % 60 == 0) {
+            text = "\(hourL):\(minuteL)"
+        } else {
+            text = "\(hourL):\(minuteL)"
+        }
+        return text
+    }
+    
+    
+    
+    
+    func getTickAttributedString(text: String) -> NSAttributedString {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .center
+        
+        let attributes = [
+            NSAttributedString.Key.paragraphStyle: paragraphStyle,
+            NSAttributedString.Key.font: UIFont.systemFont(ofSize: 11.0),
+            NSAttributedString.Key.foregroundColor: UIColor.black
+        ]
+        
+        let string = NSAttributedString(string: text, attributes: attributes)
+        return string
     }
 
     

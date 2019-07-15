@@ -25,9 +25,9 @@ class MainView: UIView {
             return chart.timeframe
         }
     }
-    var candles: [Candle] {
+    var visibleCandles: [Candle] {
         get {
-            return chart.candles
+            return chart.visibleCandles
         }
     }
     var highestPrice: Decimal {
@@ -40,21 +40,20 @@ class MainView: UIView {
             return chart.lowestPrice
         }
     }
-    var scrollDX: CGFloat = 0
     
     var candleWidth: CGFloat {
         get {
             return chart.candleWidth
         }
     }
-    //touch handling properties
-    var touchPreviousLocation = CGPoint.zero
+    
+    
     var latestCandleX: CGFloat {
         get {
-            return app.chartLatestX
+            return chart.latestX
         }
         set {
-            app.chartLatestX = newValue
+            chart.latestX = newValue
         }
     }
     
@@ -67,7 +66,7 @@ class MainView: UIView {
         super.init(frame: .zero)
         
         backgroundColor = .clear
-        self.clipsToBounds = true
+        clipsToBounds = true
         
     }
     
@@ -86,16 +85,13 @@ class MainView: UIView {
         ctx.strokeLineSegments(between: [CGPoint(x: rect.width, y: 0), CGPoint(x: rect.width, y: rect.height)])
         ctx.setLineWidth(1.0)
         
-        drawGridLines(using: ctx)
-        for j in 0 ... (candles.count - 1) {
-            let i = (candles.count - 1) - j
-            let candle = candles[i]
+        for candle in visibleCandles {
             let y = self.y(price: candle.high, frameHeight: frame.height, highestPrice: highestPrice, lowestPrice: lowestPrice)
             let h = self.y(price: candle.low, frameHeight: frame.height, highestPrice: highestPrice, lowestPrice: lowestPrice) - y
             
-            draw(candle: candle, in: CGRect(x: candle.x - candleWidth / 2, y: y, width: candleWidth, height: h), using: ctx)
+            draw(candle: candle, in: CGRect(x: candle.x, y: y, width: candleWidth, height: h), using: ctx)
         }
-
+        
     }
     
     
@@ -118,18 +114,8 @@ class MainView: UIView {
     
     
     
-    func calculateVisibleCandles() -> [Candle] {
-        var result = [Candle]()
-        for candle in candles {
-            if candle.x >= 0 && candle.x < bounds.width {
-                result.append(candle)
-            }
-        }
-        return result
-    }
-    
     private func draw(candle: Candle, in rect: CGRect, using ctx: CGContext) {
-        let candleWidth = rect.width
+        let candleWidth = rect.width * 3 / 4
         let candleHeight = rect.height
         
         let isGreen = (candle.close >= candle.open)
@@ -140,7 +126,7 @@ class MainView: UIView {
             color = app.bearCandleColor
         }
         
-        let wickWidth: CGFloat = 0.6
+        let wickWidth: CGFloat = 0.75
         
         
         var bodyHeight = ((candle.close - candle.open) / (candle.high - candle.low)).cgFloatValue * candleHeight
@@ -161,6 +147,8 @@ class MainView: UIView {
         let ctx = UIGraphicsGetCurrentContext()!
         ctx.setLineWidth(0)
         ctx.setFillColor(color.cgColor)
+        ctx.setLineCap(.round)
+        ctx.setLineJoin(.round)
         ctx.fill(CGRect(x: rect.origin.x + candleWidth / 2 - wickWidth / 2, y: rect.origin.y, width: wickWidth, height: upperWickHeight))
         ctx.fill(CGRect(x: rect.origin.x, y: rect.origin.y + upperWickHeight, width: candleWidth, height: bodyHeight))
         ctx.fill(CGRect(x: rect.origin.x + candleWidth / 2 - wickWidth / 2, y: rect.origin.y + upperWickHeight + bodyHeight, width: wickWidth, height: lowerWickHeight))
@@ -171,13 +159,13 @@ class MainView: UIView {
     private func drawGridLines(using ctx: CGContext) {
         if chart.timeView == nil || chart.priceView == nil { return }
         ctx.setStrokeColor(UIColor.fromHex(hex: "#DFEAF0").withAlphaComponent(0.5).cgColor)
-        for candle in chart.timeView.gridCandles {
-            ctx.strokeLineSegments(between: [CGPoint(x: candle.x, y: 0), CGPoint(x: candle.x, y: frame.height)])
-        }
-        
-        for y in chart.priceView.tickYs {
-            ctx.strokeLineSegments(between: [CGPoint(x: 0, y: y), CGPoint(x: frame.width, y: y)])
-        }
+//        for candle in chart.timeView.gridCandles {
+//            ctx.strokeLineSegments(between: [CGPoint(x: candle.x, y: 0), CGPoint(x: candle.x, y: frame.height)])
+//        }
+//        
+//        for y in chart.priceView.tickYs {
+//            ctx.strokeLineSegments(between: [CGPoint(x: 0, y: y), CGPoint(x: frame.width, y: y)])
+//        }
     }
 
 

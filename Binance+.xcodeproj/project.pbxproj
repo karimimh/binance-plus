@@ -58,6 +58,7 @@
 		A5BE57672268F21200E4EE09 /* SortOptionsVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5BE57662268F21200E4EE09 /* SortOptionsVC.swift */; };
 		A5D157B8223E6E8600D583D7 /* AddSymbolsTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D157B7223E6E8600D583D7 /* AddSymbolsTVC.swift */; };
 		A5D157DE2241399800D583D7 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5D157DD2241399800D583D7 /* App.swift */; };
+		A5DD3F5A22DB41320004B78C /* CrosshairView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5DD3F5922DB41320004B78C /* CrosshairView.swift */; };
 		A5F4F000226E2598002EEBD2 /* ParentVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5F4EFFF226E2598002EEBD2 /* ParentVC.swift */; };
 		A5FC7BEB227AFE93004CC6F0 /* IndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */; };
 		A5FC7BED227B0705004CC6F0 /* TimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FC7BEC227B0705004CC6F0 /* TimeView.swift */; };
@@ -292,6 +293,7 @@
 		A5BE57662268F21200E4EE09 /* SortOptionsVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SortOptionsVC.swift; sourceTree = "<group>"; };
 		A5D157B7223E6E8600D583D7 /* AddSymbolsTVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddSymbolsTVC.swift; sourceTree = "<group>"; };
 		A5D157DD2241399800D583D7 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		A5DD3F5922DB41320004B78C /* CrosshairView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrosshairView.swift; sourceTree = "<group>"; };
 		A5F4EFFF226E2598002EEBD2 /* ParentVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParentVC.swift; sourceTree = "<group>"; };
 		A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorView.swift; sourceTree = "<group>"; };
 		A5FC7BEC227B0705004CC6F0 /* TimeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeView.swift; sourceTree = "<group>"; };
@@ -553,9 +555,9 @@
 				A50570372247D4700032849A /* Utility */,
 				A5BE575F2268C0C300E4EE09 /* Custom Views */,
 				A5B7EEC9223D906700061811 /* TableCells */,
+				A55ECBD122D737A700C2288A /* List */,
 				A577308122789F0A00C08158 /* Chart */,
 				A55ECBD022D736ED00C2288A /* Scanner */,
-				A55ECBD122D737A700C2288A /* List */,
 				A5630BD62237D16F002B0152 /* AppDelegate.swift */,
 				A5630BDA2237D16F002B0152 /* Main.storyboard */,
 				A589D8832258A9C2008C98C3 /* LaunchVC.swift */,
@@ -578,18 +580,19 @@
 		A577308122789F0A00C08158 /* Chart */ = {
 			isa = PBXGroup;
 			children = (
+				A577308A2279820A00C08158 /* Chart.swift */,
+				A5FC7D4F2289880D004CC6F0 /* MainView.swift */,
+				A5FC7D51228988AF004CC6F0 /* ValueView.swift */,
+				A5DD3F5922DB41320004B78C /* CrosshairView.swift */,
+				A5FC7BEC227B0705004CC6F0 /* TimeView.swift */,
+				A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */,
+				A5FC7BFC22840CBB004CC6F0 /* Indicator.swift */,
+				A5FC7BFA22830F3F004CC6F0 /* Indicators.swift */,
 				A5630BF02238F628002B0152 /* ChartVC.swift */,
 				A5496A0D22B6C1510091F996 /* IndicatorsVC.swift */,
 				A5496A1B22B78B4E0091F996 /* IndicatorSettingsVC.swift */,
 				A5BA606B22B813BB001924F6 /* ColorPalletCVC.swift */,
 				A564CC4122CA398500B0C14B /* ChartSymbolVC.swift */,
-				A577308A2279820A00C08158 /* Chart.swift */,
-				A5FC7D4F2289880D004CC6F0 /* MainView.swift */,
-				A5FC7D51228988AF004CC6F0 /* ValueView.swift */,
-				A5FC7BEC227B0705004CC6F0 /* TimeView.swift */,
-				A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */,
-				A5FC7BFC22840CBB004CC6F0 /* Indicator.swift */,
-				A5FC7BFA22830F3F004CC6F0 /* Indicators.swift */,
 				A5FC7D4D228826B7004CC6F0 /* QuickChart.swift */,
 				A5630BF42238F94E002B0152 /* Candle.swift */,
 			);
@@ -1103,6 +1106,7 @@
 				A5630BEF2237F083002B0152 /* Symbol.swift in Sources */,
 				A5F4F000226E2598002EEBD2 /* ParentVC.swift in Sources */,
 				A5FC7BFB22830F3F004CC6F0 /* Indicators.swift in Sources */,
+				A5DD3F5A22DB41320004B78C /* CrosshairView.swift in Sources */,
 				A5BE57652268EAE500E4EE09 /* SortOptionTVCell.swift in Sources */,
 				A5BE575E2268C0B700E4EE09 /* ListTitleView.swift in Sources */,
 				A5BE57672268F21200E4EE09 /* SortOptionsVC.swift in Sources */,

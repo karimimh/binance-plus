@@ -12,7 +12,9 @@ import UIKit
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-
+    var app: App?
+    var webSocket: WebSocket?
+    var candleWebSocket: WebSocket?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
@@ -27,6 +29,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationDidEnterBackground(_ application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+        if let webSocket = self.webSocket {
+            webSocket.close()
+        }
+        if let cws = candleWebSocket {
+            cws.close()
+        }
+        
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {
@@ -35,10 +44,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        if let webSocket = self.webSocket {
+            webSocket.open()
+        }
+        if let cws = candleWebSocket {
+            cws.open()
+        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+        if let app = self.app {
+            app.save()
+        }
+        if let webSocket = self.webSocket {
+            webSocket.close()
+        }
+        if let cws = candleWebSocket {
+            cws.close()
+        }
     }
 
 

@@ -108,9 +108,29 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(reloadTableView), userInfo: nil, repeats: true)
         
     }
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if timer != nil {
+            timer.invalidate()
+        }
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if timer != nil {
+            timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(reloadTableView), userInfo: nil, repeats: true)
+        }
+    }
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        for symbol in app.allBinanceSymbols {
+            symbol.iconImage = nil
+        }
+    }
     
     @IBAction func reloadTableView() {
-        if !isEditing && !isFiltering() && tabBarVC.selectedIndex == 0 && parentVC.mainContainerLeadingConstraint.constant == 0 && parentVC.bottomContainerTopConstraint.constant == 0 && !isScrolling {
+        if !isEditing && !isFiltering() && parentVC.mainContainerLeadingConstraint.constant == 0 && parentVC.bottomContainerTopConstraint.constant == 0 && !isScrolling {
             tableView.reloadData()
             
             guard !downloadingPreviewCandles else { return }
@@ -129,14 +149,22 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
                 if symbol.lastesThirtyDailyCandles == nil {
                     symbolsDownloadingPreviewCandles.append(symbol)
                 }
+                if symbol.iconImage == nil {
+                    if let image = UIImage(named: symbol.baseAsset.lowercased() + ".png") {
+                        symbol.iconImage = image
+                    } else {
+                        symbol.iconImage = UIImage()
+                    }
+                }
             }
             if symbolsDownloadingPreviewCandles.isEmpty { return }
             self.downloadingPreviewCandles = true
             BinanaceApi.getCandlesForSymbols(symbolsDownloadingPreviewCandles, timeframe: .daily, limit: 30) { (dictionary) in
                 for item in dictionary {
                     let symbolName = item.key
-                    let symbol = self.app.getSymbol(symbolName)!
-                    symbol.lastesThirtyDailyCandles = item.value
+                    if let symbol = self.app.getSymbol(symbolName) {
+                        symbol.lastesThirtyDailyCandles = item.value
+                    }
                 }
                 self.downloadingPreviewCandles = false
             }
@@ -208,17 +236,6 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         cell.quickChart.symbol = symbol
         cell.quickChart.timeframe = .daily
         cell.quickChart.setNeedsDisplay()
-//        if symbol.lastesThirtyDailyCandles == nil {
-//            for v in cell.quickChart.subviews { v.removeFromSuperview() }
-//            if let visibleRows = tableView.indexPathsForVisibleRows {
-//                if visibleRows.contains(indexPath) {
-//                    if !self.symbolsDownloadingPreviewCandles.contains(symbol) {
-//                        symbolsDownloadingPreviewCandles.append(symbol)
-//                        downloadPreviewCandles(for: symbol)
-//                    }
-//                }
-//            }
-//        }
         
         cell.iconImageView.image = symbol.iconImage
         return cell
@@ -238,12 +255,14 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         let cell  = tableView.cellForRow(at: indexPath) as! SymbolTableViewCell
         guard let symbol = getSymbol(cell.nameLabel.text!) else { return }
         if !isEditing {
-            tabBarVC.selectedIndex = 1
             parentVC.slideRightPanGR.isEnabled = false
+            app.chartSymbol = symbol.name
+            tabBarVC.selectedIndex = 1
             guard let navVC = tabBarVC.viewControllers?[1] as? UINavigationController else { print("no nav!");return }
             guard let vc = navVC.visibleViewController as? ChartVC else { print("NoChartVC"); return }
-            app.chartSymbol = symbol.name
-            vc.reloadChart()
+            if vc.chartView != nil {
+                vc.reloadChart()
+            }
         } else {
             if !selectedSymbols.contains(symbol.name) {
                 selectedSymbols.append(symbol.name)

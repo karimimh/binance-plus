@@ -123,6 +123,48 @@ class Candle: Equatable, NSCoding {
         return lhs.symbol == rhs.symbol && lhs.openTime == rhs.openTime && lhs.closeTime == rhs.closeTime && lhs.open == rhs.open && lhs.close == rhs.close && lhs.high == rhs.high && lhs.low == rhs.low
     }
     
+    func isGreen() -> Bool {
+        return close > open
+    }
+    
+    func nextCandleOpenTime() -> Date {
+//        var calendar = Calendar(identifier: .gregorian)
+//         calendar.timeZone = TimeZone(secondsFromGMT: 0)!// utc
+        let calendar = Calendar.current
+        
+        switch timeframe {
+        case .oneMinute:
+            return calendar.date(byAdding: .minute, value: 1, to: openTime)!
+        case .threeMinutes:
+            return calendar.date(byAdding: .minute, value: 3, to: openTime)!
+        case .fiveMinutes:
+            return calendar.date(byAdding: .minute, value: 5, to: openTime)!
+        case .fifteenMinutes:
+            return calendar.date(byAdding: .minute, value: 15, to: openTime)!
+        case .thirtyMinutes:
+            return calendar.date(byAdding: .minute, value: 30, to: openTime)!
+        case .hourly:
+            return calendar.date(byAdding: .hour, value: 1, to: openTime)!
+        case .twoHourly:
+            return calendar.date(byAdding: .hour, value: 2, to: openTime)!
+        case .fourHourly:
+            return calendar.date(byAdding: .hour, value: 4, to: openTime)!
+        case .sixHourly:
+            return calendar.date(byAdding: .hour, value: 6, to: openTime)!
+        case .eightHourly:
+            return calendar.date(byAdding: .hour, value: 8, to: openTime)!
+        case .twelveHourly:
+            return calendar.date(byAdding: .hour, value: 12, to: openTime)!
+        case .daily:
+            return calendar.date(byAdding: .day, value: 1, to: openTime)!
+        case .threeDaily:
+            return calendar.date(byAdding: .day, value: 3, to: openTime)!
+        case .weekly:
+            return calendar.date(byAdding: .weekOfYear, value: 1, to: openTime)!
+        case .monthly:
+            return calendar.date(byAdding: .month, value: 1, to: openTime)!
+        }
+    }
     
     struct Key {
         static let symbol = "candle.symbol"

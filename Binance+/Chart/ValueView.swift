@@ -22,7 +22,8 @@ class ValueView: UIView {
     var tickGap: Decimal
     var tickStrings = [NSAttributedString]()
     var tickPrices = [Decimal]()
-    
+    var numberOfTicks: Int = 1
+    var precision = -1
     
     //for grids
     var tickYs = [CGFloat]()
@@ -30,21 +31,34 @@ class ValueView: UIView {
     
     
     // MARK: - Initialization
-    init(chart: Chart, tickSize: Decimal, highestValue: Decimal, lowestValue: Decimal, requiredTickPrices: [Decimal] = [Decimal]()) {
+    init(chart: Chart, tickSize: Decimal, highestValue: Decimal, lowestValue: Decimal, requiredTickPrices: [Decimal] = [Decimal](), precision: Int = -1) {
         self.tickSize = tickSize
         self.highestValue = highestValue
         self.lowestValue = lowestValue
         self.chart = chart
         self.tickGap = tickSize
         self.requiredTickPrices = requiredTickPrices
+        self.precision = precision
         super.init(frame: .zero)
         
         clipsToBounds = true
         
         backgroundColor = .white
         if tickSize > 0 {
-            calculateTickGap()
             calculateTicks()
+        } else {
+            var width: CGFloat = 0
+            for p in requiredTickPrices {
+                let attrStr =  getTickAttributedString(text: " " + ((precision == -1) ? p.stringValue : p.formattedWith(fractionDigitCount: precision)))
+                tickStrings.append(attrStr)
+                if attrStr.size().width + 6 > width {
+                    width = attrStr.size().width + 6
+                }
+                tickPrices.append(p)
+            }
+            if width > chart.valueViewWidth {
+                chart.valueViewWidth = width
+            }
         }
     }
     
@@ -58,21 +72,7 @@ class ValueView: UIView {
     override func draw(_ rect: CGRect) {
         super.draw(rect)
         if tickSize > 0 {
-            calculateTickGap()
             calculateTicks()
-        } else {
-            var width: CGFloat = 0
-            for p in requiredTickPrices {
-                let attrStr = getTickAttributedString(text: "-  " + NSDecimalNumber(decimal: p).stringValue)
-                tickStrings.append(attrStr)
-                if attrStr.size().width > width {
-                    width = attrStr.size().width
-                }
-                tickPrices.append(p)
-            }
-            if width > chart.valueViewWidth {
-                chart.valueViewWidth = width
-            }
         }
         
         tickYs.removeAll()
@@ -86,10 +86,12 @@ class ValueView: UIView {
             let price = tickPrices[i]
             let stringSize = string.size()
             let y = self.y(price: price, frameHeight: rect.height, highestPrice: highestValue, lowestPrice: lowestValue)
-            let stringRect = CGRect(x: 0, y: y - stringSize.height / 2, width: stringSize.width, height: stringSize.height)
+            let stringRect = CGRect(x: 6, y: y - stringSize.height / 2, width: stringSize.width, height: stringSize.height)
             tickYs.append(y)
+            ctx.strokeLineSegments(between: [CGPoint(x: 0, y: y), CGPoint(x: 6, y: y)])
             string.draw(in: stringRect)
         }
+        chart.drawGridLines()
     }
     
     
@@ -107,6 +109,9 @@ class ValueView: UIView {
     // MARK: - Private Methods
     
     private func calculateTicks() {
+        if tickPrices.count * 2 <= numberOfTicks || tickPrices.count > Int(maxNumberOfTicks) + 2 {
+            calculateTickGap()
+        }
         tickStrings.removeAll()
         tickPrices.removeAll()
         var width: CGFloat = 0
@@ -114,19 +119,19 @@ class ValueView: UIView {
         
         var p = Decimal(m + 1) * tickGap
         while p < highestValue {
-            let attrStr = getTickAttributedString(text: "-  " + NSDecimalNumber(decimal: p).stringValue)
+            let attrStr = getTickAttributedString(text: " " + ((precision == -1) ? p.stringValue : p.formattedWith(fractionDigitCount: precision)))
             tickStrings.append(attrStr)
-            if attrStr.size().width > width {
-                width = attrStr.size().width
+            if attrStr.size().width + 6 > width {
+                width = attrStr.size().width + 6
             }
             tickPrices.append(p)
             p += tickGap
         }
         for p in requiredTickPrices {
-            let attrStr = getTickAttributedString(text: "-  " + NSDecimalNumber(decimal: p).stringValue)
+            let attrStr = getTickAttributedString(text: " " + ((precision == -1) ? p.stringValue : p.formattedWith(fractionDigitCount: precision)))
             tickStrings.append(attrStr)
-            if attrStr.size().width > width {
-                width = attrStr.size().width
+            if attrStr.size().width + 6 > width {
+                width = attrStr.size().width + 6
             }
             tickPrices.append(p)
         }
@@ -160,21 +165,18 @@ class ValueView: UIView {
         
         let tickHeight = getTickAttributedString(text: "0.00002135").size().height
         if bounds.height > 0 {
-            maxNumberOfTicks = bounds.height / (tickHeight * 4)
+            maxNumberOfTicks = bounds.height / (tickHeight * 3)
         } else {
-            maxNumberOfTicks = UIScreen.main.bounds.height / (tickHeight * 8)
+            maxNumberOfTicks = 1
         }
         
-        minNumberOfTicks = 1;
         var bestM: Decimal = m.first!
         for m1 in m {
-            let d = (n / m1).cgFloatValue
-            if d > maxNumberOfTicks {
-                break
-            } else if d >= minNumberOfTicks {
+            numberOfTicks = Int((diff / (m1 * tickSize)).doubleValue)
+            if numberOfTicks <= Int(maxNumberOfTicks) {
                 bestM = m1
             } else {
-                bestM = m1
+                break
             }
         }
         
@@ -188,9 +190,9 @@ class ValueView: UIView {
     }
     
     
-    private func getTickAttributedString(text: String) -> NSAttributedString {
+    func getTickAttributedString(text: String) -> NSAttributedString {
         let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.alignment = .center
+        paragraphStyle.alignment = .left
         
         let attributes = [
             NSAttributedString.Key.paragraphStyle: paragraphStyle,

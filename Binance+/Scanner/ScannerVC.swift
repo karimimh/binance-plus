@@ -205,6 +205,31 @@ class ScannerVC: UIViewController, UITableViewDelegate, UITableViewDataSource  {
                     }
                 }
             }
+        case .rsi_divergence:
+            for i in 0 ..< symbolsFound.count {
+                let symbolName = symbolsFound[i]
+                var data = [Decimal]()
+                for candle in allCandles[symbolName]! {
+                    data.append(candle.close)
+                }
+                let length = filter.properties[Indicator.PropertyKey.length] as! Int
+                if data.count <= length {
+                    removedSymbols.append(symbolName)
+                    continue
+                }
+                let rsiArray = Indicators.rsi(data: data, length: length)
+                let rsi = rsiArray.last!
+                switch filter.relationship {
+                case .greaterThan:
+                    if rsi <= filter.rValue {
+                        removedSymbols.append(symbolName)
+                    }
+                case .lessThan:
+                    if rsi >= filter.rValue {
+                        removedSymbols.append(symbolName)
+                    }
+                }
+            }
         case .macd_bar:
             for i in 0 ..< symbolsFound.count {
                 let symbolName = symbolsFound[i]

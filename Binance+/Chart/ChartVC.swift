@@ -26,7 +26,7 @@ class ChartVC: UIViewController {
     
     
     @IBOutlet weak var superV: UIView!
-    @IBOutlet weak var mainContainer: UIView!
+    @IBOutlet weak var chartView: UIView!
     @IBOutlet weak var rightContainerWidthConstraint: NSLayoutConstraint!
     @IBOutlet weak var rightContainer: UIView!
     @IBOutlet weak var rightContainerLeadingConstraint: NSLayoutConstraint!
@@ -100,18 +100,40 @@ class ChartVC: UIViewController {
         
         
         
-        reloadChart()
-        
     }
     
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        self.chart = nil
+    }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        if app != nil && self.chart == nil && self.chartView != nil {
+            reloadChart()
+        } else {
+            if let delegate = UIApplication.shared.delegate as? AppDelegate {
+                delegate.candleWebSocket?.open()
+            }
+        }
+    }
     
-    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if let delegate = UIApplication.shared.delegate as? AppDelegate {
+            delegate.candleWebSocket?.close()
+        }
+    }
     
     
     // MARK: - Methods
     
     func reloadChart() {
+        if let delegate = UIApplication.shared.delegate as? AppDelegate {
+            delegate.candleWebSocket?.close()
+            delegate.candleWebSocket = nil
+        }
         if app == nil {
             tabbarVC = tabBarController as? TabBarVC
             parentVC = tabbarVC.parentVC
@@ -120,27 +142,33 @@ class ChartVC: UIViewController {
         
         
         if self.chart != nil {
-            for sv in chart.subviews { sv.removeFromSuperview() }
             chart.removeFromSuperview()
+            chart = nil
         }
+        for sv in chartView.subviews {
+            sv.removeFromSuperview()
+        }
+        chartView.setNeedsLayout()
+        
         
         setupBarButtons()
+        settingsBBI.isEnabled = false
         
-        
-        let N = Int(UIScreen.main.bounds.width / CGFloat(app.chartCandleWidth * 4 / 3)) * 2
+        let N = 500
         BinanaceApi.getCandles(symbol: app.getSymbol(app.chartSymbol)!, timeframe: app.chartTimeframe, limit: N < 1000 ? N : 1000) { (arr) in
             if let candles = arr {
                 self.app.chartCandles = candles
                 DispatchQueue.main.async {
                     self.chart = Chart(frame: CGRect(x: 0, y: 0, width: 414, height: 623), app: self.app, chartVC: self)
-                    self.mainContainer.addSubview(self.chart)
+                    self.chartView.addSubview(self.chart)
                     self.chart.translatesAutoresizingMaskIntoConstraints = false
-                    self.chart.topAnchor.constraint(equalTo: self.mainContainer.topAnchor).isActive = true
-                    self.chart.bottomAnchor.constraint(equalTo: self.mainContainer.bottomAnchor).isActive = true
-                    self.chart.leadingAnchor.constraint(equalTo: self.mainContainer.leadingAnchor).isActive = true
-                    self.chart.trailingAnchor.constraint(equalTo: self.mainContainer.trailingAnchor).isActive = true
+                    self.chart.topAnchor.constraint(equalTo: self.chartView.topAnchor).isActive = true
+                    self.chart.bottomAnchor.constraint(equalTo: self.chartView.bottomAnchor).isActive = true
+                    self.chart.leadingAnchor.constraint(equalTo: self.chartView.leadingAnchor).isActive = true
+                    self.chart.trailingAnchor.constraint(equalTo: self.chartView.trailingAnchor).isActive = true
                     self.indicatorsVC.indicatorsTableView.reloadData()
                     self.app.save()
+                    self.settingsBBI.isEnabled = true
                 }
             }
         }
@@ -155,9 +183,13 @@ class ChartVC: UIViewController {
         
         BinanaceApi.getCandles(symbol: app.getSymbol(app.chartSymbol)!, timeframe: app.chartTimeframe, startTime: beginTime, endTime: endTime) { (arr) in
             if let extraCandles = arr {
-                DispatchQueue.main.async {
+                DispatchQueue.main.sync {
                     self.app.chartCandles.insert(contentsOf: extraCandles, at: 0)
-                    self.chart.timeView.calculateAllPossibleTimeTicks()
+                    self.chart.firstVisibleCandleIndex += extraCandles.count
+                    self.chart.latestVisibleCandleIndex += extraCandles.count
+                    for indicator in self.chart.indicators {
+                        indicator.calculateIndicatorValue(candles: self.chart.candles)
+                    }
                     self.chart.update()
                     self.indicatorsVC.indicatorsTableView.reloadData()
                 }
@@ -232,14 +264,14 @@ class ChartVC: UIViewController {
         
         let blurEffect = UIBlurEffect(style: .prominent)
         blurEffectView = UIVisualEffectView(effect: blurEffect)
-        blurEffectView.frame = mainContainer.bounds
+        blurEffectView.frame = chartView.bounds
         blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         blurEffectView.alpha = 0.5
         
         UIView.animate(withDuration: 0.2, delay: 0, options: .transitionCurlUp, animations: {
              self.view.layoutIfNeeded()
         }) { (_) in
-            self.mainContainer.addSubview(self.blurEffectView)
+            self.chartView.addSubview(self.blurEffectView)
             self.blurEffectView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.handleTap(_:))))
             self.blurEffectView.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(self.handlePan(_:))))
         }
@@ -295,7 +327,7 @@ class ChartVC: UIViewController {
         case .began:
             panBeganRightContainerX = rightContainer.frame.origin.x
         case .changed:
-            if panBeganRightContainerX + dx < mainContainer.bounds.width && panBeganRightContainerX + dx > mainContainer.bounds.width - rightContainerBestWidth {
+            if panBeganRightContainerX + dx < chartView.bounds.width && panBeganRightContainerX + dx > chartView.bounds.width - rightContainerBestWidth {
                 moveContainerView(by: dx)
             }
         case .ended:

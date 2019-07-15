@@ -196,6 +196,11 @@ class Symbol: NSObject, NSCoding {
         self.init(name: name, status: status, baseAsset: baseAsset, baseAssetPrecision: baseAssetPrecision, quoteAsset: quoteAsset, quoteAssetPrecision: quoteAssetPrecision, price: price, volume: volume, quoteAssetVolume: quoteAssetVolume, percentChange: percentChange, tickSize: tickSize, stepSize: stepSize, minQuantity: minQuantity, minPrice: minPrice)
     }
     
+    func priceTruncatedInTickSize(_ p: Decimal) -> Decimal {
+        let n = Int((p / tickSize).doubleValue)
+        return Decimal(n) * tickSize
+    }
+    
     
     func btcVolume(_ app: App!) -> Decimal {
         if quoteAsset == "BTC" {
@@ -209,5 +214,26 @@ class Symbol: NSObject, NSCoding {
         return app.getPriceInBTC(symbol: self)
     }
     
+    func priceFormatted(_ p: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.minimumFractionDigits = tickSize.significantFractionalDecimalDigits
+        formatter.numberStyle = .currency
+        formatter.currencyGroupingSeparator = ""
+        formatter.maximumFractionDigits = tickSize.significantFractionalDecimalDigits
+        formatter.currencySymbol = ""
+        let str = formatter.string(from: p as NSNumber)!
+        return str
+    }
+    
+    func volumeFormatted(_ v: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.minimumFractionDigits = stepSize.significantFractionalDecimalDigits
+        formatter.numberStyle = .currency
+        formatter.currencyGroupingSeparator = ""
+        formatter.maximumFractionDigits = stepSize.significantFractionalDecimalDigits
+        formatter.currencySymbol = ""
+        let str = formatter.string(from: v as NSNumber)!
+        return str
+    }
     
 }

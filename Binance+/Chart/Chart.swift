@@ -39,7 +39,7 @@ class Chart: UIView {
     }
     var highestPrice: Decimal {
         get {
-            if app.chartHighestPrice == nil {
+            if app.chartHighestPrice == nil || app.chartLowestPrice == Decimal.nan  {
                 app.chartHighestPrice = highestPriceOf(candles)// * Decimal(1 + app.chartTopMargin / 100.0)
             }
             return app.chartHighestPrice
@@ -50,7 +50,7 @@ class Chart: UIView {
     }
     var lowestPrice: Decimal {
         get {
-            if app.chartLowestPrice == nil {
+            if app.chartLowestPrice == nil || app.chartLowestPrice == Decimal.nan {
                 app.chartLowestPrice = lowestPriceOf(candles)// * Decimal(1 - app.chartBottomMargin / 100.0)
             }
             return app.chartLowestPrice
@@ -73,6 +73,9 @@ class Chart: UIView {
         }
         set {
             app.chartIndicators = newValue
+            for indicator in newValue {
+                indicator.calculateIndicatorValue(candles: self.candles)
+            }
         }
     }
     
@@ -98,11 +101,16 @@ class Chart: UIView {
     }
     
     
+    var firstVisibleCandleIndex = -1
+    var latestVisibleCandleIndex = -1
+    var visibleCandles = [Candle]()
+    
     //views
     var mainView: MainView!
     var priceView: ValueView!
     var timeView: TimeView!
     var indicatorViews = [IndicatorView]()
+    var gridLayer = CAShapeLayer()
     
     var autoButton: UIButton!
     
@@ -113,9 +121,11 @@ class Chart: UIView {
     var panBeganHighestPrice: Decimal = 0
     var panBeganLowestPrice: Decimal = 0
     var pinchBeganCandleWidth: CGFloat = 4
+    var longPressBeganX: CGFloat = 0
     var longPressBeganY: CGFloat = 0
     var longPressBeganFramePercentage: Double = 0
     var longPressBaganMainFramePercentage: Double = 100
+    var longPressGR: UILongPressGestureRecognizer!
     var frameConstraints = [NSLayoutConstraint]()
     var chartVC: ChartVC!
     
@@ -124,18 +134,40 @@ class Chart: UIView {
     var reframingIndicatorView: IndicatorView?
     
     var chartAndIndicatorViewGestureRecognizers = [UIGestureRecognizer]()
+    let bgView: UIView
+    var crosshair: CrosshairView!
+    var crosshairTapGR: UITapGestureRecognizer!
+    var crosshairPanGR: UIPanGestureRecognizer!
     
     
+    var streamingCandle: Candle?
     
     //MARK: - Initialization
     init(frame: CGRect, app: App, chartVC: ChartVC) {
         self.app = app
         self.chartVC = chartVC
+        bgView = UIView(frame: frame)
         super.init(frame: frame)
         
+        bgView.layer.addSublayer(gridLayer)
+        addSubview(bgView)
+
+        crosshair = CrosshairView(chart: self)
+        addSubview(crosshair)
+        crosshair.translatesAutoresizingMaskIntoConstraints = false
+        crosshair.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
+        crosshair.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true
+        crosshair.topAnchor.constraint(equalTo: topAnchor).isActive = true
+        crosshair.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
+        crosshairTapGR = UITapGestureRecognizer(target: self, action: #selector(crosshairHandleTap(_:)))
+        addGestureRecognizer(crosshairTapGR)
+        crosshairPanGR = UIPanGestureRecognizer(target: self, action: #selector(crosshairHandlePan(_:)))
+        addGestureRecognizer(crosshairPanGR)
+        crosshairPanGR.isEnabled = false
+        
         self.clipsToBounds = true
-        additionalInit()
         self.backgroundColor = .white
+        additionalInit()
         
     }
     
@@ -147,12 +179,15 @@ class Chart: UIView {
     
     
     private func additionalInit() {
-        setCandlesX(latestX: latestX)
+        if (latestX - UIScreen.main.bounds.width * 0.8) / candleWidth > CGFloat(candles.count) {
+            latestX = UIScreen.main.bounds.width * 0.75
+        }
+        processVisibleCandles()
         
         mainView = MainView(chart: self)
         addSubview(mainView)
         
-        priceView = ValueView(chart: self, tickSize: symbol.tickSize, highestValue: highestPrice, lowestValue: lowestPrice)
+        priceView = ValueView(chart: self, tickSize: symbol.tickSize, highestValue: highestPrice, lowestValue: lowestPrice, precision: symbol.tickSize.significantFractionalDecimalDigits)
         addSubview(priceView)
 
 
@@ -171,6 +206,10 @@ class Chart: UIView {
         autoButton.addTarget(self, action: #selector(handleAuto), for: .touchUpInside)
         addSubview(autoButton)
         
+        for indicator in indicators {
+            indicator.calculateIndicatorValue(candles: candles)
+        }
+        
         layoutChart()
         
 
@@ -183,10 +222,70 @@ class Chart: UIView {
         priceView.addGestureRecognizer(gr3)
         let gr4 = UIPanGestureRecognizer(target: self, action: #selector(timeViewHandlePan(_:)))
         timeView.addGestureRecognizer(gr4)
-        let gr5 = UILongPressGestureRecognizer(target: self, action: #selector(chartHandleLongPress(_:)))
-        addGestureRecognizer(gr5)
+        longPressGR = UILongPressGestureRecognizer(target: self, action: #selector(chartHandleLongPress(_:)))
+        addGestureRecognizer(longPressGR)
         
         chartAndIndicatorViewGestureRecognizers.append(contentsOf: [gr1, gr2, gr3, gr4])
+        BinanaceApi.candlestickStream(symbolName: symbol.name, timeframe: timeframe) { (optionalJSON) in
+            guard let json = optionalJSON else { return }
+            let symbolName = json["s"] as! String
+            let kline = json["k"] as! [String: Any]
+            
+            let openTime = kline["t"] as! Int64
+            let closeTime = kline["T"] as! Int64
+            let interval = kline["i"] as! String
+            
+            let open = Decimal(string: kline["o"] as! String)!
+            let close = Decimal(string: kline["c"] as! String)!
+            let high = Decimal(string: kline["h"] as! String)!
+            let low = Decimal(string: kline["l"] as! String)!
+            
+            let baseAssetVolume = Decimal(string: kline["v"] as! String)!
+            let numberOfTrades = kline["n"] as! Int64
+//            let isThisKLineClosed = kline["x"] as! Bool
+            let quoteAssetVolume = Decimal(string: kline["q"] as! String)!
+            
+            let latestCandleOpen = self.candles.last!.openTime.utcToLocal().toMillis()
+            let nextCandleOpen = self.candles.last!.nextCandleOpenTime().utcToLocal().toMillis()
+            
+            if symbolName != self.symbol.name || interval != self.timeframe.rawValue ||
+                (latestCandleOpen != openTime && nextCandleOpen != openTime) {
+                DispatchQueue.main.async {
+                    self.chartVC.reloadChart()
+                }
+                return
+            }
+            let candle = Candle(symbol: self.symbol, timeframe: Timeframe(rawValue: interval)!, open: open, high: high, low: low, close: close, volume: baseAssetVolume, openTime: Date(timeIntervalSince1970: TimeInterval(openTime) / 1000), closeTime: Date(timeIntervalSince1970: TimeInterval(closeTime) / 1000), quoteAssetVolume: quoteAssetVolume, numberOfTrades: numberOfTrades, takerBuyBaseAssetVolume: 0, takerBuyQuoteAssetVolume: 0)
+            
+            self.streamingCandle = candle
+            if nextCandleOpen == openTime {
+                self.candles.append(candle)
+                self.processVisibleCandles()
+                for indicator in self.indicators {
+                    indicator.calculateIndicatorValue(candles: self.candles)
+                }
+                DispatchQueue.main.async {
+                    self.update()
+                }
+            } else {
+                self.candles[self.candles.count - 1].closeTime =  Date(timeIntervalSince1970: TimeInterval(closeTime) / 1000)
+                self.candles[self.candles.count - 1].open = open
+                self.candles[self.candles.count - 1].close = close
+                self.candles[self.candles.count - 1].high = high
+                self.candles[self.candles.count - 1].low = low
+                self.candles[self.candles.count - 1].volume = baseAssetVolume
+                self.candles[self.candles.count - 1].quoteAssetVolume = quoteAssetVolume
+                self.candles[self.candles.count - 1].numberOfTrades = numberOfTrades
+                self.processVisibleCandles()
+                for indicator in self.indicators {
+                    indicator.calculateIndicatorValue(candles: self.candles)
+                }
+                DispatchQueue.main.async {
+                    self.update()
+                }
+            }
+            
+        }
     }
     
     
@@ -199,11 +298,17 @@ class Chart: UIView {
     }
     
     private func setupIndicatorViews() {
+        if !frameConstraints.isEmpty {
+            NSLayoutConstraint.deactivate(frameConstraints)
+            frameConstraints.removeAll()
+        }
         for v in indicatorViews {
+            if v.indicator.frameRow > 0 {
+                v.valueView.removeFromSuperview()
+            }
             v.removeFromSuperview()
         }
         indicatorViews.removeAll()
-        
         
         for indicator in indicators {
             let v = IndicatorView(chart: self, indicator: indicator)
@@ -219,6 +324,7 @@ class Chart: UIView {
             }
         }
         bringSubviewToFront(mainView)
+        bringSubviewToFront(crosshair)
     }
     
     
@@ -228,7 +334,7 @@ class Chart: UIView {
             frameConstraints.removeAll()
         }
         
-        autoButton.removeFromSuperview()
+        
         mainView.frame = CGRect(x: 0, y: 0, width: frame.width - valueViewWidth, height: (frame.height - TimeView.getHeight()) * CGFloat(mainFramePercentage / 100))
         
         timeView.translatesAutoresizingMaskIntoConstraints = false
@@ -302,7 +408,6 @@ class Chart: UIView {
         }
         
         
-        addSubview(autoButton)
         autoButton.translatesAutoresizingMaskIntoConstraints = false
         let c1 = autoButton.bottomAnchor.constraint(equalTo: timeView.bottomAnchor)
         let c2 = autoButton.trailingAnchor.constraint(equalTo: trailingAnchor)
@@ -317,26 +422,120 @@ class Chart: UIView {
     
     //MARK: - Frame Update
     func update() {
-        setCandlesX(latestX: mainView.latestCandleX)
+        processVisibleCandles()
         
         mainView.frame = CGRect(x: 0, y: 0, width: frame.width - valueViewWidth, height: (frame.height - TimeView.getHeight()) * CGFloat(mainFramePercentage / 100))
+        priceView.update(newhighestValue: highestPrice, newLowestValue: lowestPrice)
+        timeView.update()
+        mainView.update()
+        for iv in indicatorViews {
+            iv.update()
+        }
+        crosshair.setNeedsDisplay()
+    }
+    
+    
+    private func processVisibleCandles() {
+        visibleCandles.removeAll()
+        calculateLatestVisibleCandleIndex()
+        if latestVisibleCandleIndex < 0 {
+            return
+        }
         
-        if app.chartAutoScale {
-            let visibleCandles = mainView.calculateVisibleCandles()
-            highestPrice = highestPriceOf(visibleCandles)// * Decimal(1 + app.chartTopMargin / 100)
-            lowestPrice = lowestPriceOf(visibleCandles)// * Decimal(1 - app.chartBottomMargin / 100)
+        
+        let auto = app.chartAutoScale
+        if auto {
+            highestPrice = -Decimal.greatestFiniteMagnitude
+            lowestPrice = Decimal.greatestFiniteMagnitude
+        }
+        
+        
+        for i in firstVisibleCandleIndex ... latestVisibleCandleIndex {
+            let candle = candles[i]
+            let x = latestX - candleWidth * CGFloat(candles.count - 1 - i)
+            candle.x = x
+            if auto {
+                if candle.high > highestPrice {
+                    highestPrice = candle.high
+                }
+                if candle.low < lowestPrice {
+                    lowestPrice = candle.low
+                }
+            }
+            visibleCandles.append(candle)
+        }
+        
+        if auto {
             let diff = highestPrice - lowestPrice
             let u = diff * Decimal(app.chartTopMargin / 100)
             let l = diff * Decimal(app.chartBottomMargin / 100)
             highestPrice = highestPrice + u
             lowestPrice = lowestPrice - l
         }
-        
-        
-        priceView.update(newhighestValue: highestPrice, newLowestValue: lowestPrice)
-        timeView.update()
-        
     }
+    
+    private func calculateLatestVisibleCandleIndex() {
+        var w: CGFloat
+        if mainView == nil || mainView.bounds.width == 0 {
+            w = UIScreen.main.bounds.width
+        } else {
+            w = mainView.bounds.width
+        }
+        
+        if latestX <= w && latestX + candleWidth >= 0 {
+            latestVisibleCandleIndex = candles.count - 1
+            let numberOfVisibleCandles = Int(latestX / candleWidth) + 1
+            firstVisibleCandleIndex = latestVisibleCandleIndex - numberOfVisibleCandles
+        } else if latestX + candleWidth < 0 {
+            latestVisibleCandleIndex = -1
+            firstVisibleCandleIndex = -1
+        } else {
+            let dx = latestX - w
+            let n = Int(dx / candleWidth)
+            latestVisibleCandleIndex = candles.count - 2 - n
+            let numberOfVisibleCandles = Int(w / candleWidth) + 1
+            firstVisibleCandleIndex = latestVisibleCandleIndex - numberOfVisibleCandles
+        }
+        
+        if firstVisibleCandleIndex < 0 {
+            firstVisibleCandleIndex = 0
+        }
+    }
+    
+    
+    
+    func drawGridLines() {
+        if timeView == nil || priceView == nil { return }
+        let path = UIBezierPath()
+        let w = self.bounds.width
+        let h = self.bounds.height
+        
+        for candle in timeView.gridCandles {
+            path.move(to: CGPoint(x: candle.x, y: 0))
+            path.addLine(to: CGPoint(x: candle.x, y: h))
+        }
+
+        for y in priceView.tickYs {
+            path.move(to: CGPoint(x: 0, y: y))
+            path.addLine(to: CGPoint(x: w, y: y))
+        }
+        
+        for iv in indicatorViews {
+            if iv.indicator.frameRow == 0 { continue }
+            let vv = iv.valueView
+            for y in vv.tickYs {
+                path.move(to: CGPoint(x: 0, y: y + vv.frame.origin.y))
+                path.addLine(to: CGPoint(x: w, y: y + vv.frame.origin.y))
+            }
+        }
+        
+        gridLayer.strokeColor = UIColor.lightGray.withAlphaComponent(0.25).cgColor
+        gridLayer.lineWidth = 0.5
+        gridLayer.path = path.cgPath
+    }
+    
+    
+    
     
     //MARK: - Handle Touches
     @IBAction func chartHandlePan(_ recognizer: UIPanGestureRecognizer) {
@@ -352,7 +551,7 @@ class Chart: UIView {
             break
         case .changed:
             let newLatestCandleX = panBeganLatestX + dx
-            let newFirstCandleX = newLatestCandleX - (candleWidth * 4 / 3) * CGFloat(candles.count)
+            let newFirstCandleX = newLatestCandleX - candleWidth * CGFloat(candles.count)
             if !(newLatestCandleX > 0) {
                 return
             }
@@ -387,10 +586,10 @@ class Chart: UIView {
             pinchBeganCandleWidth = candleWidth
             panBeganLatestX = mainView.latestCandleX
         case .changed:
-            if pinchBeganCandleWidth * scale < 0.6 { return }
+            if pinchBeganCandleWidth * scale < 1 { return }
             candleWidth = pinchBeganCandleWidth * scale
             let newLatestCandleX = panBeganLatestX * (1 + scale) / 2
-            let newFirstCandleX = newLatestCandleX - (candleWidth * 4 / 3) * CGFloat(candles.count)
+            let newFirstCandleX = newLatestCandleX - candleWidth * CGFloat(candles.count)
             if !(newLatestCandleX > 0) {
                 return
             }
@@ -445,10 +644,10 @@ class Chart: UIView {
         case .began:
             pinchBeganCandleWidth = candleWidth
         case .changed:
-            if pinchBeganCandleWidth * scale < 0.6 { return }
+            if pinchBeganCandleWidth * scale < 1 { return }
             candleWidth = pinchBeganCandleWidth * scale
             
-            let newFirstCandleX = latestX - (candleWidth * 4 / 3) * CGFloat(candles.count)
+            let newFirstCandleX = latestX - candleWidth * CGFloat(candles.count)
             if newFirstCandleX >= 0 && !isDownloadingExtraCandles {
                 self.chartVC.downloadExtraCandles(count: getNumberOfPossibleVisibleCandles())
                 self.isDownloadingExtraCandles = true
@@ -474,7 +673,7 @@ class Chart: UIView {
             break
         case .changed:
             let newLatestCandleX = panBeganLatestX + dx
-            let newFirstCandleX = newLatestCandleX - (candleWidth * 4 / 3) * CGFloat(candles.count)
+            let newFirstCandleX = newLatestCandleX - candleWidth * CGFloat(candles.count)
             if !(newLatestCandleX > 0) {
                 return
             }
@@ -502,10 +701,10 @@ class Chart: UIView {
             pinchBeganCandleWidth = candleWidth
             panBeganLatestX = mainView.latestCandleX
         case .changed:
-            if pinchBeganCandleWidth * scale < 0.6 { return }
+            if pinchBeganCandleWidth * scale < 1 { return }
             candleWidth = pinchBeganCandleWidth * scale
             let newLatestCandleX = panBeganLatestX * (1 + scale) / 2
-            let newFirstCandleX = newLatestCandleX - (candleWidth * 4 / 3) * CGFloat(candles.count)
+            let newFirstCandleX = newLatestCandleX - candleWidth * CGFloat(candles.count)
             if !(newLatestCandleX > 0) {
                 return
             }
@@ -530,6 +729,8 @@ class Chart: UIView {
                 gr.isEnabled = false
             }
             let l = recognizer.location(in: self)
+            longPressBeganY = l.y
+            longPressBeganX = l.x
             var indicatorView: IndicatorView?
             for iv in indicatorViews {
                 if iv.indicator.frameRow == 0 { continue }
@@ -540,36 +741,56 @@ class Chart: UIView {
                 }
             }
             
-            guard let iv = indicatorView else {
-                return
+            if let iv = indicatorView  {
+                let v = UIView(frame: CGRect.zero)
+                v.backgroundColor = UIColor.black
+                addSubview(v)
+                
+                reframingIndicatorView = iv
+                
+                iv.handleView = v
+                
+                longPressBeganFramePercentage = iv.indicator.frameHeightPercentage
+                longPressBaganMainFramePercentage = mainFramePercentage
+                
+                setupConstraints()
+                update()
+                
+            } else {
+                crosshair.position = CGPoint(x: visibleCandles[visibleCandles.count / 2].x, y: mainView.frame.minX + mainView.frame.height / 2)
+                crosshair.initialPosition = CGPoint(x: visibleCandles[visibleCandles.count / 2].x, y: mainView.frame.minX + mainView.frame.height / 2)
+                crosshair.isEnabled = true
+                
+                update()
             }
-            
-            let v = UIView(frame: CGRect.zero)
-            v.backgroundColor = UIColor.black
-            addSubview(v)
-            
-            reframingIndicatorView = iv
-            
-            iv.handleView = v
-            longPressBeganY = l.y
-            longPressBeganFramePercentage = iv.indicator.frameHeightPercentage
-            longPressBaganMainFramePercentage = mainFramePercentage
-            
-            setupConstraints()
-            update()
         case .changed:
-            guard let iv = reframingIndicatorView else { return }
             let l = recognizer.location(in: self)
+            let dx = longPressBeganX - l.x
             let dy = longPressBeganY - l.y
-            let p = Double(dy / bounds.height) * 100
-            let newP = p + longPressBeganFramePercentage
-            if (longPressBaganMainFramePercentage + longPressBeganFramePercentage) - newP < 20 || newP < 5 {
+            if let iv = reframingIndicatorView {
+                let p = Double(dy / bounds.height) * 100
+                let newP = p + longPressBeganFramePercentage
+                if (longPressBaganMainFramePercentage + longPressBeganFramePercentage) - newP < 20 || newP < 5 {
+                    return
+                }
+                iv.indicator.frameHeightPercentage = newP
+                setupConstraints()
+                update()
+            } else if crosshair.isEnabled {
+                let newY = crosshair.initialPosition.y - dy
+                let n = Int(dx / candleWidth)
+                let newX = crosshair.initialPosition.x - CGFloat(n) * candleWidth
+                if newX <= visibleCandles.last!.x && newX >= visibleCandles.first!.x {
+                    crosshair.position = CGPoint(x: newX, y: newY)
+                    update()
+                }
+            }
+        case .ended, .cancelled, .failed:
+            if crosshair.isEnabled {
+                crosshairPanGR.isEnabled = true
+                recognizer.isEnabled = false
                 return
             }
-            iv.indicator.frameHeightPercentage = newP
-            setupConstraints()
-            update()
-        case .ended, .cancelled, .failed:
             for gr in chartAndIndicatorViewGestureRecognizers {
                 gr.isEnabled = true
             }
@@ -587,7 +808,46 @@ class Chart: UIView {
     }
     
     
+    @IBAction func crosshairHandleTap(_ sender: UITapGestureRecognizer) {
+        if !crosshair.isEnabled {
+            return
+        }
+        crosshairPanGR.isEnabled = false
+        crosshair.isEnabled = false
+        for gr in chartAndIndicatorViewGestureRecognizers {
+            gr.isEnabled = true
+        }
+        longPressGR.isEnabled = true
+        
+        update()
+    }
     
+    
+    @IBAction func crosshairHandlePan(_ recognizer: UIPanGestureRecognizer) {
+        if !crosshair.isEnabled {
+            return
+        }
+        let tr = recognizer.translation(in: self)
+        let dx = tr.x
+        let dy = tr.y
+        
+        switch recognizer.state {
+        case .began:
+            crosshair.initialPosition = CGPoint(x: crosshair.position.x, y: crosshair.position.y)
+        case .changed:
+            let newY = crosshair.initialPosition.y + dy
+            let n = Int(dx / candleWidth)
+            let newX = crosshair.initialPosition.x + CGFloat(n) * candleWidth
+            if newX <= visibleCandles.last!.x && newX >= visibleCandles.first!.x {
+                crosshair.position = CGPoint(x: newX, y: newY)
+                update()
+            }
+        case .ended, .failed, .cancelled:
+            break
+        default:
+            break
+        }
+    }
     
     
     
@@ -602,20 +862,23 @@ class Chart: UIView {
         update()
     }
     //MARK: - Private Methods
-    func isVisible(candle: Candle) -> Bool {
-        return candle.x >= 0 && candle.x < mainView.bounds.width
-    }
     
     
-    private func setCandlesX(latestX: CGFloat) {
-        let spacing = candleWidth / 3
-        for j in 0 ... (candles.count - 1) {
-            let i = (candles.count - 1) - j
-            let candle = candles[i]
-            let x = latestX - (spacing + candleWidth) * CGFloat(j)
-            candle.x = x
-        }
+    
+    
+    
+    
+    
+    private func getUnMarginedHighestPrice() -> Decimal {
+        let diff = (highestPrice - lowestPrice) / (1 + Decimal(app.chartTopMargin / 100) + Decimal(app.chartBottomMargin / 100))
+        return highestPrice - diff * Decimal(app.chartTopMargin / 100)
     }
+    
+    private func getUnMarginedLowestPrice() -> Decimal {
+        let diff = (highestPrice - lowestPrice) / (1 + Decimal(app.chartTopMargin / 100) + Decimal(app.chartBottomMargin / 100))
+        return lowestPrice + diff * Decimal(app.chartBottomMargin / 100)
+    }
+    
     
     
     private func y(price: Decimal, frameHeight: CGFloat, highestPrice: Decimal, lowestPrice: Decimal) -> CGFloat {
@@ -652,15 +915,6 @@ class Chart: UIView {
         l.sizeToFit()
         let h = l.bounds.height
         return h * 2
-    }
-    func calculateVisibleCandles() -> [Candle] {
-        var result = [Candle]()
-        for candle in candles {
-            if candle.x >= 0 && candle.x < frame.width {
-                result.append(candle)
-            }
-        }
-        return result
     }
     
     private func getBottomView() -> UIView {
@@ -707,9 +961,9 @@ class Chart: UIView {
     
     func getNumberOfPossibleVisibleCandles() -> Int {
         if bounds.width > 0 {
-            return Int(bounds.width / CGFloat(candleWidth * 4 / 3))
+            return Int(bounds.width / candleWidth)
         } else {
-            return Int(UIScreen.main.bounds.width / CGFloat(candleWidth * 4 / 3))
+            return Int(UIScreen.main.bounds.width / candleWidth)
         }
     }
 }

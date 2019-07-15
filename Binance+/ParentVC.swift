@@ -58,6 +58,9 @@ class ParentVC: UIViewController, UIGestureRecognizerDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        if let delegate = UIApplication.shared.delegate as? AppDelegate {
+            delegate.app = self.app
+        }
         for child in children {
             if let vc = child as? TabBarVC {
                 mainContainerVC = vc

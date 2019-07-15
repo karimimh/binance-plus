@@ -17,9 +17,9 @@ class IndicatorView: UIView {
             return indicator.indicatorType
         }
     }
-    var candles: [Candle] {
+    var visibleCandles: [Candle] {
         get {
-            return chart.candles
+            return chart.visibleCandles
         }
     }
     var properties: [String: Any] {
@@ -46,13 +46,15 @@ class IndicatorView: UIView {
         case .volume:
             var highestVolume: Decimal = 0
             for candle in chart.candles {
-                if candle.volume > highestVolume { highestVolume = candle.volume }
+                if chart.app.getVolumeInBTC(symbol: chart.symbol, baseVolume: candle.volume) > highestVolume {
+                    highestVolume = chart.app.getVolumeInBTC(symbol: chart.symbol, baseVolume: candle.volume)
+                }
             }
-            valueView = ValueView(chart: chart, tickSize: chart.symbol.stepSize, highestValue: highestVolume * 1.2, lowestValue: 0)
+            valueView = ValueView(chart: chart, tickSize: chart.symbol.stepSize, highestValue: highestVolume * 1.2, lowestValue: 0, precision: chart.symbol.stepSize.significantFractionalDecimalDigits)
         case .rsi:
-            valueView = ValueView(chart: chart, tickSize: -1.0, highestValue: 100, lowestValue: 0, requiredTickPrices: [30, 70])
+            valueView = ValueView(chart: chart, tickSize: -1.0, highestValue: 100, lowestValue: 0, requiredTickPrices: [30, 70], precision: 2)
         case .macd:
-            valueView = ValueView(chart: chart, tickSize: -1.0, highestValue: 100, lowestValue: 0, requiredTickPrices: [0])
+            valueView = ValueView(chart: chart, tickSize: -1.0, highestValue: 100, lowestValue: 0, requiredTickPrices: [0], precision: chart.symbol.tickSize.significantFractionalDecimalDigits)
         }
         
         super.init(frame: .zero)
@@ -120,56 +122,47 @@ class IndicatorView: UIView {
     //MARK: - Private Methods
     
     private func drawVolume(in rect: CGRect, using ctx: CGContext) {
-        let candles = self.candles
-        var data = [Decimal]()
+        let visibleCandles = self.visibleCandles
         var highestVolume: Decimal = 0
-        for candle in candles {
-            data.append(candle.volume)
-            if chart.isVisible(candle: candle) && candle.volume > highestVolume { highestVolume = candle.volume }
+        for candle in visibleCandles {
+            if chart.app.getVolumeInBTC(symbol: chart.symbol, baseVolume: candle.volume) > highestVolume {
+                highestVolume = chart.app.getVolumeInBTC(symbol: chart.symbol, baseVolume: candle.volume)
+            }
         }
         highestVolume *= 1.2
         valueView.update(newhighestValue: highestVolume, newLowestValue: 0)
         
-        var color = UIColor.lightGray
-        if let c = properties[Indicator.PropertyKey.color_1] as? UIColor {
-            color = c
-        }
-        var smaColor = UIColor.blue
-        if let cc = properties[Indicator.PropertyKey.color_2] as? UIColor {
-            smaColor = cc
-        }
-        var smaLineWidth: CGFloat = 1
-        if let w = properties[Indicator.PropertyKey.line_width_1] as? CGFloat {
-            smaLineWidth = w
-        }
+        let color = properties[Indicator.PropertyKey.color_1] as! UIColor
+        let smaColor = properties[Indicator.PropertyKey.color_2] as! UIColor
+        let smaLineWidth = properties[Indicator.PropertyKey.line_width_1] as! CGFloat
+        let smaLength = properties[Indicator.PropertyKey.length] as! Int
         
-        var smaLength: Int = 8
-        if let l = properties[Indicator.PropertyKey.length] as? Int {
-            smaLength = l
-        }
-        let sma = Indicators.sma(data: data, length: smaLength)
+        if visibleCandles.isEmpty { return }
         
         var smaPoints = [CGPoint]()
         ctx.setFillColor(color.withAlphaComponent(0.5).cgColor)
-        for i in 0..<candles.count {
-            let candle = candles[i]
-            let height: CGFloat = (candle.volume / highestVolume).cgFloatValue * frame.height
-            ctx.fill(CGRect(x: candle.x - chart.candleWidth / 2, y: frame.height - height, width: chart.candleWidth * 2 / 3, height: height))
-            if i >= smaLength {
-                smaPoints.append(CGPoint(x: candle.x, y: frame.height - (sma[i] / highestVolume).cgFloatValue * frame.height))
-            }
-        }
-        if smaPoints.isEmpty {
-            return
+        for i in 0..<visibleCandles.count {
+            let candle = visibleCandles[i]
+            let pair = indicator.indicatorValue[candle.openTime] as! (Decimal, Decimal)
+            let volume = pair.0
+            let sma = pair.1
+            let height: CGFloat = (volume / highestVolume).cgFloatValue * frame.height
+            ctx.fill(CGRect(x: candle.x, y: frame.height - height, width: chart.candleWidth * 2 / 3, height: height))
+            
+            let candleIndex =  i + chart.firstVisibleCandleIndex
+            if candleIndex < smaLength { continue }
+            smaPoints.append(CGPoint(x: candle.x, y: frame.height - (sma / highestVolume).cgFloatValue * frame.height))
         }
         
-        ctx.setStrokeColor(smaColor.withAlphaComponent(0.5).cgColor)
+        if chart.candles.count < smaLength  || smaPoints.isEmpty { return }
+        
+        ctx.setStrokeColor(smaColor.cgColor)
         ctx.setLineWidth(smaLineWidth)
         ctx.setLineJoin(.round)
         
         ctx.move(to: smaPoints[0])
-        for point in smaPoints {
-            ctx.addLine(to: point)
+        for i in 0 ..< smaPoints.count {
+            ctx.addLine(to: smaPoints[i])
         }
         ctx.strokePath()
         
@@ -178,59 +171,35 @@ class IndicatorView: UIView {
     
     
     private func drawSMA(in rect: CGRect, using ctx: CGContext) {
-        let candles = self.candles
-        var source: String = "Close"
-        if let s = properties[Indicator.PropertyKey.source] as? String {
-            source = s
-        }
-        var data = [Decimal]()
+        let visibleCandles = self.visibleCandles
         
-        for candle in candles {
-            if source == "Open" {
-                data.append(candle.open)
-            } else if source == "Low" {
-                data.append(candle.low)
-            } else if source == "High" {
-                data.append(candle.high)
-            } else {
-                data.append(candle.close)
-            }
-        }
+        let length = properties[Indicator.PropertyKey.length] as! Int
         
-        
-        var length: Int = 8
-        if let l = properties[Indicator.PropertyKey.length] as? Int {
-            length = l
-        }
-        
-        let sma = Indicators.sma(data: data, length: length)
-        if length >= candles.count {
-            return
-        }
+        if length > chart.candles.count { return }
+        if visibleCandles.isEmpty { return }
         
         var points = [CGPoint]()
-        for i in length..<candles.count {
-            let point = CGPoint(x: candles[i].x, y: Util.y(price: sma[i], frameHeight: frame.height, highestPrice: chart.highestPrice, lowestPrice: chart.lowestPrice))
+        for i in 0..<visibleCandles.count {
+            let candle = visibleCandles[i]
+            let candleIndex =  i + chart.firstVisibleCandleIndex
+            if candleIndex < length { continue }
+            let sma = indicator.indicatorValue[candle.openTime] as! Decimal
+            let point = CGPoint(x: candle.x, y: Util.y(price: sma, frameHeight: frame.height, highestPrice: chart.highestPrice, lowestPrice: chart.lowestPrice))
             points.append(point)
         }
+        if points.isEmpty { return }
+        let color = properties[Indicator.PropertyKey.color_1] as! UIColor
+        
+        let lineWidth = properties[Indicator.PropertyKey.line_width_1] as! CGFloat
         
         
-        var color = UIColor.black
-        if let c = properties[Indicator.PropertyKey.color_1] as? UIColor {
-            color = c
-        }
-        
-        var lineWidth: CGFloat = 1
-        if let w = properties[Indicator.PropertyKey.line_width_1] as? CGFloat {
-            lineWidth = w
-        }
-        ctx.setStrokeColor(color.withAlphaComponent(0.5).cgColor)
+        ctx.setStrokeColor(color.cgColor)
         ctx.setLineWidth(lineWidth)
         ctx.setLineJoin(.round)
         
         ctx.move(to: points[0])
-        for point in points {
-            ctx.addLine(to: point)
+        for i in 0 ..< points.count {
+            ctx.addLine(to: points[i])
         }
         ctx.strokePath()
     }
@@ -238,59 +207,35 @@ class IndicatorView: UIView {
     
     
     private func drawEMA(in rect: CGRect, using ctx: CGContext) {
-        let candles = self.candles
-        var source: String = "Close"
-        if let s = properties[Indicator.PropertyKey.source] as? String {
-            source = s
-        }
-
-        var data = [Decimal]()
-        for candle in candles {
-            if source == "Open" {
-                data.append(candle.open)
-            } else if source == "Low" {
-                data.append(candle.low)
-            } else if source == "High" {
-                data.append(candle.high)
-            } else {
-                data.append(candle.close)
-            }
-        }
+        let visibleCandles = self.visibleCandles
         
+        let length = properties[Indicator.PropertyKey.length] as! Int
         
-        var length: Int = 8
-        if let l = properties[Indicator.PropertyKey.length] as? Int {
-            length = l
-        }
+        if length > chart.candles.count { return }
+        if visibleCandles.isEmpty { return }
         
-        let ema = Indicators.ema(data: data, length: length)
-        
-        if length >= candles.count {
-            return
-        }
         var points = [CGPoint]()
-        for i in length..<candles.count {
-            let point = CGPoint(x: candles[i].x, y: Util.y(price: ema[i], frameHeight: frame.height, highestPrice: chart.highestPrice, lowestPrice: chart.lowestPrice))
+        for i in 0..<visibleCandles.count {
+            let candle = visibleCandles[i]
+            let candleIndex =  i + chart.firstVisibleCandleIndex
+            if candleIndex < length { continue }
+            let ema = indicator.indicatorValue[candle.openTime] as! Decimal
+            let point = CGPoint(x: candle.x, y: Util.y(price: ema, frameHeight: frame.height, highestPrice: chart.highestPrice, lowestPrice: chart.lowestPrice))
             points.append(point)
         }
+        if points.isEmpty { return }
+        let color = properties[Indicator.PropertyKey.color_1] as! UIColor
+        
+        let lineWidth = properties[Indicator.PropertyKey.line_width_1] as! CGFloat
         
         
-        var color = UIColor.black
-        if let c = properties[Indicator.PropertyKey.color_1] as? UIColor {
-            color = c
-        }
-        
-        var lineWidth: CGFloat = 1
-        if let w = properties[Indicator.PropertyKey.line_width_1] as? CGFloat {
-            lineWidth = w
-        }
-        ctx.setStrokeColor(color.withAlphaComponent(0.5).cgColor)
+        ctx.setStrokeColor(color.cgColor)
         ctx.setLineWidth(lineWidth)
         ctx.setLineJoin(.round)
         
         ctx.move(to: points[0])
-        for point in points {
-            ctx.addLine(to: point)
+        for i in 0 ..< points.count {
+            ctx.addLine(to: points[i])
         }
         ctx.strokePath()
     }
@@ -300,114 +245,67 @@ class IndicatorView: UIView {
     
     
     private func drawRSI(in rect: CGRect, using ctx: CGContext) {
-        let candles = self.candles
-        var source: String = "Close"
-        if let s = properties[Indicator.PropertyKey.source] as? String {
-            source = s
-        }
-        var data = [Decimal]()
+        let visibleCandles = self.visibleCandles
         
-        for candle in candles {
-            if source == "Open" {
-                data.append(candle.open)
-            } else if source == "Low" {
-                data.append(candle.low)
-            } else if source == "High" {
-                data.append(candle.high)
-            } else {
-                data.append(candle.close)
-            }
-        }
+        let length = properties[Indicator.PropertyKey.length] as! Int
         
-        
-        var length: Int = 14
-        if let l = properties[Indicator.PropertyKey.length] as? Int {
-            length = l
-        }
-        
-        let rsi = Indicators.rsi(data: data, length: length)
-        if length >= candles.count {
-            return
-        }
+        if length > chart.candles.count { return }
+        if visibleCandles.isEmpty { return }
         
         var points = [CGPoint]()
-        for i in length..<candles.count {
-            let point = CGPoint(x: candles[i].x, y: Util.y(price: rsi[i], frameHeight: frame.height, highestPrice: Decimal(100), lowestPrice: Decimal(0)))
+        for i in 0..<visibleCandles.count {
+            let candle = visibleCandles[i]
+            let candleIndex =  i + chart.firstVisibleCandleIndex
+            if candleIndex < length { continue }
+            let rsi = indicator.indicatorValue[candle.openTime] as! Decimal
+            let point = CGPoint(x: candle.x, y: Util.y(price: rsi, frameHeight: frame.height, highestPrice: 100, lowestPrice: 0))
             points.append(point)
         }
+        if points.isEmpty { return }
+        let color = properties[Indicator.PropertyKey.color_1] as! UIColor
+        
+        let lineWidth = properties[Indicator.PropertyKey.line_width_1] as! CGFloat
         
         
-        var color = UIColor.black
-        if let c = properties[Indicator.PropertyKey.color_1] as? UIColor {
-            color = c
-        }
-        
-        var lineWidth: CGFloat = 1
-        if let w = properties[Indicator.PropertyKey.line_width_1] as? CGFloat {
-            lineWidth = w
-        }
-        ctx.setStrokeColor(color.withAlphaComponent(0.5).cgColor)
+        ctx.setStrokeColor(color.cgColor)
         ctx.setLineWidth(lineWidth)
         ctx.setLineJoin(.round)
         
         ctx.move(to: points[0])
-        for point in points {
-            ctx.addLine(to: point)
+        for i in 0 ..< points.count {
+            ctx.addLine(to: points[i])
         }
         ctx.strokePath()
     }
     
     
     private func drawMACD(in rect: CGRect, using ctx: CGContext) {
-        let candles = self.candles
-        var source: String = "Close"
-        if let s = properties[Indicator.PropertyKey.source] as? String {
-            source = s
-        }
-        var data = [Decimal]()
-        
-        for candle in candles {
-            if source == "Open" {
-                data.append(candle.open)
-            } else if source == "Low" {
-                data.append(candle.low)
-            } else if source == "High" {
-                data.append(candle.high)
-            } else {
-                data.append(candle.close)
-            }
-        }
+        let visibleCandles = self.visibleCandles
         
         
-        var fastLength: Int = 12
-        if let l = properties[Indicator.PropertyKey.fastLength] as? Int {
-            fastLength = l
-        }
+        let slowLength = properties[Indicator.PropertyKey.slowLength] as! Int
+        let signalSmoothingLength = properties[Indicator.PropertyKey.signalSmoothingLength] as! Int
         
-        var slowLength: Int = 26
-        if let l = properties[Indicator.PropertyKey.slowLength] as? Int {
-            slowLength = l
-        }
-        
-        var signalSmoothingLength = 9
-        if let l = properties[Indicator.PropertyKey.signalSmoothingLength] as? Int {
-            signalSmoothingLength = l
-        }
-        if data.count <= slowLength + signalSmoothingLength {
+        if visibleCandles.isEmpty { return }
+        if chart.candles.count <= slowLength + signalSmoothingLength {
             return
         }
-        let macd = Indicators.macd(data: data, fastLength: fastLength, slowLength: slowLength, signalSmoothingLength: signalSmoothingLength)
+        let length = slowLength + signalSmoothingLength
         //compute lowestMACD & highestMACD
         var lowestMACD = chart.highestPrice
         var highestMACD = -chart.highestPrice
-        for i in (slowLength + signalSmoothingLength)..<macd.count {
-            if !chart.isVisible(candle: candles[i]) { continue }
-            if macd[i].0 > highestMACD { highestMACD = macd[i].0 }
-            if macd[i].0 < lowestMACD { lowestMACD = macd[i].0 }
-            if macd[i].1 > highestMACD { highestMACD = macd[i].1 }
-            if macd[i].1 < lowestMACD { lowestMACD = macd[i].1 }
-            if (macd[i].0 - macd[i].1) > highestMACD { highestMACD = macd[i].0 - macd[i].1 }
-            if (macd[i].0 - macd[i].1) < lowestMACD { lowestMACD = macd[i].0 - macd[i].1 }
+        for i in 0 ..< visibleCandles.count {
+            let candle = visibleCandles[i]
+            let candleIndex =  i + chart.firstVisibleCandleIndex
+            if candleIndex < length { continue }
+            
+            let macd = indicator.indicatorValue[candle.openTime] as! (Decimal, Decimal)
+            if macd.0 > highestMACD { highestMACD = macd.0 }
+            if macd.0 < lowestMACD { lowestMACD = macd.0 }
+            if macd.1 > highestMACD { highestMACD = macd.1 }
+            if macd.1 < lowestMACD { lowestMACD = macd.1 }
+            if (macd.0 - macd.1) > highestMACD { highestMACD = macd.0 - macd.1 }
+            if (macd.0 - macd.1) < lowestMACD { lowestMACD = macd.0 - macd.1 }
         }
         
         highestMACD = highestMACD + (highestMACD - lowestMACD) * 0.1
@@ -416,58 +314,37 @@ class IndicatorView: UIView {
         var macdPoints = [CGPoint]()
         var signalPoints = [CGPoint]()
         var diffPoints = [CGPoint]()
-        for i in 0..<candles.count {
-            let macdPoint = CGPoint(x: candles[i].x, y: Util.y(price: macd[i].0, frameHeight: frame.height, highestPrice: highestMACD, lowestPrice: lowestMACD))
+        for i in 0..<visibleCandles.count {
+            let candle = visibleCandles[i]
+            let candleIndex =  i + chart.firstVisibleCandleIndex
+            if candleIndex < length { continue }
+            
+            let macd = indicator.indicatorValue[candle.openTime] as! (Decimal, Decimal)
+            
+            let macdPoint = CGPoint(x: candle.x, y: Util.y(price: macd.0, frameHeight: frame.height, highestPrice: highestMACD, lowestPrice: lowestMACD))
             macdPoints.append(macdPoint)
             
-            let signalPoint = CGPoint(x: candles[i].x, y: Util.y(price: macd[i].1, frameHeight: frame.height, highestPrice: highestMACD, lowestPrice: lowestMACD))
+            let signalPoint = CGPoint(x: candle.x, y: Util.y(price: macd.1, frameHeight: frame.height, highestPrice: highestMACD, lowestPrice: lowestMACD))
             signalPoints.append(signalPoint)
             
-            let diffPoint = CGPoint(x: candles[i].x, y: Util.y(price: macd[i].0 - macd[i].1, frameHeight: frame.height, highestPrice: highestMACD, lowestPrice: lowestMACD))
+            let diffPoint = CGPoint(x: candle.x, y: Util.y(price: macd.0 - macd.1, frameHeight: frame.height, highestPrice: highestMACD, lowestPrice: lowestMACD))
             diffPoints.append(diffPoint)
         }
+        if diffPoints.isEmpty { return }
+        let macdColor = properties[Indicator.PropertyKey.color_1] as! UIColor
+        let signalColor = properties[Indicator.PropertyKey.color_2] as! UIColor
+        let macdLineWidth = properties[Indicator.PropertyKey.line_width_1] as! CGFloat
+        let signalLineWidth = properties[Indicator.PropertyKey.line_width_2] as! CGFloat
+        let diffPositiveColor = properties[Indicator.PropertyKey.color_3] as! UIColor
+        let diffNegativeColor = properties[Indicator.PropertyKey.color_4] as! UIColor
         
-        
-        var macdColor = UIColor.blue
-        if let c = properties[Indicator.PropertyKey.color_1] as? UIColor {
-            macdColor = c
-        }
-        
-        var signalColor = UIColor.red
-        if let c = properties[Indicator.PropertyKey.color_2] as? UIColor {
-            signalColor = c
-        }
-        
-        var macdLineWidth: CGFloat = 1
-        if let w = properties[Indicator.PropertyKey.line_width_1] as? CGFloat {
-            macdLineWidth = w
-        }
-        
-        var signalLineWidth: CGFloat = 1
-        if let w = properties[Indicator.PropertyKey.line_width_2] as? CGFloat {
-            signalLineWidth = w
-        }
-        
-        var diffPositiveColor = UIColor.green
-        if let c = properties[Indicator.PropertyKey.color_3] as? UIColor {
-            diffPositiveColor = c
-        }
-        
-        var diffNegativeColor = UIColor.red
-        if let c = properties[Indicator.PropertyKey.color_4] as? UIColor {
-            diffNegativeColor = c
-        }
-        
-        
-        
-        if candles.count < slowLength + signalSmoothingLength { return }
         
         //draw bars
-        for i in (slowLength + signalSmoothingLength) ..< candles.count {
+        for i in 0 ..< diffPoints.count {
             let zeroY =  Util.y(price: Decimal(0), frameHeight: frame.height, highestPrice: highestMACD, lowestPrice: lowestMACD)
             let color: UIColor = (diffPoints[i].y >= zeroY) ? diffNegativeColor : diffPositiveColor
             ctx.setFillColor(color.withAlphaComponent(0.5).cgColor)
-            ctx.fill(CGRect(x: candles[i].x - chart.candleWidth / 2, y: diffPoints[i].y, width: chart.candleWidth, height: zeroY - diffPoints[i].y))
+            ctx.fill(CGRect(x: diffPoints[i].x, y: diffPoints[i].y, width: chart.candleWidth, height: zeroY - diffPoints[i].y))
         }
         
         //draw macd line
@@ -475,8 +352,8 @@ class IndicatorView: UIView {
         ctx.setStrokeColor(macdColor.withAlphaComponent(0.5).cgColor)
         ctx.setLineWidth(macdLineWidth)
         ctx.beginPath()
-        ctx.move(to: macdPoints[slowLength])
-        for i in slowLength ..< macdPoints.count {
+        ctx.move(to: macdPoints[0])
+        for i in 0 ..< macdPoints.count {
             let point = macdPoints[i]
             ctx.addLine(to: point)
         }
@@ -488,8 +365,8 @@ class IndicatorView: UIView {
         ctx.setStrokeColor(signalColor.withAlphaComponent(0.5).cgColor)
         ctx.setLineWidth(signalLineWidth)
         ctx.beginPath()
-        ctx.move(to: signalPoints[slowLength + signalSmoothingLength])
-        for i in (slowLength + signalSmoothingLength) ..< signalPoints.count {
+        ctx.move(to: signalPoints[0])
+        for i in 0 ..< signalPoints.count {
             let point = signalPoints[i]
             ctx.addLine(to: point)
         }
@@ -504,44 +381,15 @@ class IndicatorView: UIView {
     
     
     private func drawBollingerBands(in rect: CGRect, using ctx: CGContext) {
-        let candles = self.candles
-        var source: String = "Close"
-        if let s = properties[Indicator.PropertyKey.source] as? String {
-            source = s
-        }
-        var data = [Decimal]()
-        
-        for candle in candles {
-            if source == "Open" {
-                data.append(candle.open)
-            } else if source == "Low" {
-                data.append(candle.low)
-            } else if source == "High" {
-                data.append(candle.high)
-            } else {
-                data.append(candle.close)
-            }
-        }
+        let visibleCandles = self.visibleCandles
         
         
-        var length: Int = 20
-        if let l = properties[Indicator.PropertyKey.fastLength] as? Int {
-            length = l
-        }
         
-        var stdDev: Int = 2
-        if let l = properties[Indicator.PropertyKey.slowLength] as? Int {
-            stdDev = l
-        }
+        let length = properties[Indicator.PropertyKey.fastLength] as! Int
         
-        var showsMiddleBand: Bool = true
-        if let b = properties[Indicator.PropertyKey.showMiddleBand] as? Bool {
-            showsMiddleBand = b
-        }
+        let showsMiddleBand = properties[Indicator.PropertyKey.showMiddleBand] as! Bool
         
-        let bb = Indicators.bollinger_bands(data: data, length: length, stdDev: stdDev)
-        
-        if data.count <= length {
+        if chart.candles.count <= length || visibleCandles.isEmpty {
             return
         }
         
@@ -549,25 +397,21 @@ class IndicatorView: UIView {
         var middlePoints = [CGPoint]()
         var lowerPoints = [CGPoint]()
         
-        for i in 0..<candles.count {
-            upperPoints.append(CGPoint(x: candles[i].x, y: Util.y(price: bb[i].0, frameHeight: frame.height, highestPrice: chart.highestPrice, lowestPrice: chart.lowestPrice)))
-            middlePoints.append(CGPoint(x: candles[i].x, y: Util.y(price: bb[i].1, frameHeight: frame.height, highestPrice: chart.highestPrice, lowestPrice: chart.lowestPrice)))
-            lowerPoints.append(CGPoint(x: candles[i].x, y: Util.y(price: bb[i].2, frameHeight: frame.height, highestPrice: chart.highestPrice, lowestPrice: chart.lowestPrice)))
+        for i in 0..<visibleCandles.count {
+            let candleIndex =  i + chart.firstVisibleCandleIndex
+            if candleIndex < length { continue }
+            
+            let bb = indicator.indicatorValue[visibleCandles[i].openTime] as! (Decimal, Decimal, Decimal)
+            upperPoints.append(CGPoint(x: visibleCandles[i].x, y: Util.y(price: bb.0, frameHeight: frame.height, highestPrice: chart.highestPrice, lowestPrice: chart.lowestPrice)))
+            middlePoints.append(CGPoint(x: visibleCandles[i].x, y: Util.y(price: bb.1, frameHeight: frame.height, highestPrice: chart.highestPrice, lowestPrice: chart.lowestPrice)))
+            lowerPoints.append(CGPoint(x: visibleCandles[i].x, y: Util.y(price: bb.2, frameHeight: frame.height, highestPrice: chart.highestPrice, lowestPrice: chart.lowestPrice)))
         }
         
+        if upperPoints.count < 2 { return }
         
-        var color = UIColor.lightGray
-        if let c = properties[Indicator.PropertyKey.color_1] as? UIColor {
-            color = c
-        }
+        let color = properties[Indicator.PropertyKey.color_1] as! UIColor
         
-        var lineWidth: CGFloat = 1
-        if let w = properties[Indicator.PropertyKey.line_width_1] as? CGFloat {
-            lineWidth = w
-        }
-
-        
-        
+        let lineWidth = properties[Indicator.PropertyKey.line_width_1] as! CGFloat
         
         
         
@@ -575,25 +419,26 @@ class IndicatorView: UIView {
         ctx.setLineWidth(lineWidth)
         ctx.setLineJoin(.round)
         ctx.beginPath()
-        ctx.move(to: upperPoints[length - 1])
-        for i in length ..< upperPoints.count {
+        ctx.move(to: upperPoints[0])
+        for i in 0 ..< upperPoints.count {
             let point = upperPoints[i]
             ctx.addLine(to: point)
         }
         ctx.strokePath()
 
         ctx.beginPath()
-        ctx.move(to: lowerPoints[length - 1])
-        for i in length..<lowerPoints.count {
+        ctx.move(to: lowerPoints[0])
+        for i in 0 ..< lowerPoints.count {
             let point = lowerPoints[i]
             ctx.addLine(to: point)
         }
         ctx.strokePath()
         
         
+        
         ctx.setLineWidth(0)
         ctx.setFillColor(color.withAlphaComponent(0.25).cgColor)
-        for i in length ..< upperPoints.count {
+        for i in 1 ..< upperPoints.count {
             ctx.beginPath()
             ctx.move(to: upperPoints[i - 1])
             let p1 = upperPoints[i]
@@ -613,8 +458,8 @@ class IndicatorView: UIView {
         if showsMiddleBand {
             ctx.beginPath()
             ctx.setStrokeColor(color.withAlphaComponent(0.7).withAlphaComponent(0.5).cgColor)
-            ctx.move(to: middlePoints[length - 1])
-            for i in length ..< middlePoints.count {
+            ctx.move(to: middlePoints[0])
+            for i in 0 ..< middlePoints.count {
                 let point = middlePoints[i]
                 ctx.addLine(to: point)
             }
@@ -630,13 +475,13 @@ class IndicatorView: UIView {
     private func drawGridLines(using ctx: CGContext) {
         if chart.timeView == nil { return }
         ctx.setStrokeColor(UIColor.fromHex(hex: "#DFEAF0").withAlphaComponent(0.5).cgColor)
-        for candle in chart.timeView.gridCandles {
-            ctx.strokeLineSegments(between: [CGPoint(x: candle.x, y: 0), CGPoint(x: candle.x, y: frame.height)])
-        }
-        
-        for y in valueView.tickYs {
-            ctx.strokeLineSegments(between: [CGPoint(x: 0, y: y), CGPoint(x: frame.width, y: y)])
-        }
+//        for candle in chart.timeView.gridCandles {
+//            ctx.strokeLineSegments(between: [CGPoint(x: candle.x, y: 0), CGPoint(x: candle.x, y: frame.height)])
+//        }
+//        
+//        for y in valueView.tickYs {
+//            ctx.strokeLineSegments(between: [CGPoint(x: 0, y: y), CGPoint(x: frame.width, y: y)])
+//        }
         
     }
     
