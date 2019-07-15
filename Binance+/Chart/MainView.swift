@@ -47,6 +47,8 @@ class MainView: UIView {
         }
     }
     
+    var spacing: CGFloat = 0
+    
     
     var latestCandleX: CGFloat {
         get {
@@ -156,17 +158,7 @@ class MainView: UIView {
     }
     
     
-    private func drawGridLines(using ctx: CGContext) {
-        if chart.timeView == nil || chart.priceView == nil { return }
-        ctx.setStrokeColor(UIColor.fromHex(hex: "#DFEAF0").withAlphaComponent(0.5).cgColor)
-//        for candle in chart.timeView.gridCandles {
-//            ctx.strokeLineSegments(between: [CGPoint(x: candle.x, y: 0), CGPoint(x: candle.x, y: frame.height)])
-//        }
-//        
-//        for y in chart.priceView.tickYs {
-//            ctx.strokeLineSegments(between: [CGPoint(x: 0, y: y), CGPoint(x: frame.width, y: y)])
-//        }
-    }
+    
 
 
 }
