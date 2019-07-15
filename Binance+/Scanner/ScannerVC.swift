@@ -92,7 +92,9 @@ class ScannerVC: UIViewController, UITableViewDelegate, UITableViewDataSource  {
         guard let navVC = tabBarVC.viewControllers?[1] as? UINavigationController else { print("no nav!");return }
         guard let vc = navVC.visibleViewController as? ChartVC else { print("NoChartVC"); return }
         app.chartSymbol = symbol.name
-        vc.reloadChart()
+        if vc.chartView != nil {
+            vc.reloadChart()
+        }
     }
     
     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
@@ -143,9 +145,11 @@ class ScannerVC: UIViewController, UITableViewDelegate, UITableViewDataSource  {
                 }
                 candles[item.key] = newArr
             }
-            self.checkFilter(filter: filter, allCandles: candles)
-            self.filterIndex += 1
-            self.progress()
+            DispatchQueue.global(qos: .background).async {
+                self.checkFilter(filter: filter, allCandles: candles)
+                self.filterIndex += 1
+                self.progress()
+            }
         }
     }
     
@@ -217,18 +221,53 @@ class ScannerVC: UIViewController, UITableViewDelegate, UITableViewDataSource  {
                     removedSymbols.append(symbolName)
                     continue
                 }
-                let rsiArray = Indicators.rsi(data: data, length: length)
-                let rsi = rsiArray.last!
-                switch filter.relationship {
-                case .greaterThan:
-                    if rsi <= filter.rValue {
-                        removedSymbols.append(symbolName)
+                let rsi = Indicators.rsi(data: data, length: length)
+                let bullOrBear = filter.properties[Indicator.PropertyKey.bullishOrBearish] as! String
+                
+                var x = rsi.count - 2
+                while x > rsi.count - 6 && x > 2 {
+                    if bullOrBear == "Bullish" {
+                        if rsi[x] > filter.rValue {
+                            x -= 1
+                            continue
+                        }
+                    } else {
+                        if rsi[x] < filter.rValue {
+                            x -= 1
+                            continue
+                        }
                     }
-                case .lessThan:
-                    if rsi >= filter.rValue {
+                    if rsi[x] < rsi[x - 1] && rsi[x] < rsi[x + 1] && data[x] < data[x + 1] && data[x] < data[x - 1] {
+                        break
+                    }
+                    
+                    x -= 1
+                }
+                
+                var y = x - 2
+                var divIndex = -1
+                while y > 0 {
+                    if rsi[y] < rsi[y - 1] && rsi[y] < rsi[y + 1] && data[y] < data[y + 1] && data[y] < data[y - 1] &&
+                        rsi[y] < rsi[x] && data[y] > data[x] {
+                        divIndex = y
+                        break
+                    }
+                    y -= 1
+                }
+                
+                if divIndex == -1 {
+                    removedSymbols.append(symbolName)
+                    continue
+                }
+                
+                for t in (divIndex + 1) ..< x {
+                    let lineRSI = rsi[divIndex] + (rsi[x] - rsi[divIndex]) * Decimal(t - divIndex) / Decimal(x - divIndex)
+                    if rsi[t] < lineRSI {
                         removedSymbols.append(symbolName)
+                        break
                     }
                 }
+                
             }
         case .macd_bar:
             for i in 0 ..< symbolsFound.count {

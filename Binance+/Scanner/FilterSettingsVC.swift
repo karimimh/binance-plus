@@ -44,11 +44,11 @@ class FilterSettingsVC: UIViewController, UITableViewDelegate, UITableViewDataSo
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         guard let filter = self.filter else { return 0 }
         switch filter.type {
-        case .volume24h, .price, .rsi_divergence:
+        case .volume24h, .price:
             return 2
         case .green_candle:
             return 3
-        case .avg_volume, .relative_volume, .rsi:
+        case .avg_volume, .relative_volume, .rsi, .rsi_divergence:
             return 4
         case .ema_difference, .upper_boll_band_minus_candle_close, .lower_boll_band_minus_candle_close:
             return 5
@@ -464,6 +464,34 @@ class FilterSettingsVC: UIViewController, UITableViewDelegate, UITableViewDataSo
                         filter.properties[Indicator.PropertyKey.length] = v
                     }
                     cell.rightTextField.text = String(filter.properties[Indicator.PropertyKey.length] as! Int)
+                }
+                cell.textFieldStartedEditing = {
+                    self.currentTextField = cell.rightTextField
+                }
+                cell.textFieldResignedCompletion = {
+                    self.currentTextField = nil
+                }
+                return cell
+            } else if row == 1 {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "FilterButtonTVCell") as! FilterButtonTVCell
+                cell.leftLabel.text = "bullish / bearish"
+                cell.rightButton.setTitle((filter.properties[Indicator.PropertyKey.bullishOrBearish] as! String), for: .normal)
+                cell.buttonPressedAction = {
+                    self.parentVC.slideUpOptionsChooser(options: ["Bullish"], title: "Select option", completion: { (index) in
+                        filter.properties[Indicator.PropertyKey.bullishOrBearish] = (index == 0) ? "Bullish" : "Bearish"
+                        cell.rightButton.setTitle((filter.properties[Indicator.PropertyKey.bullishOrBearish] as! String), for: .normal)
+                    })
+                }
+                return cell
+            } else if row == 2 {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "FilterTFTVCell") as! FilterTFTVCell
+                cell.leftLabel.text = "rsi limit"
+                cell.rightTextField.text = filter.rValue.stringValue
+                cell.newTextCompletion = { (text) in
+                    if let v = Decimal(string: text) {
+                        filter.rValue = v
+                    }
+                    cell.rightTextField.text = filter.rValue.stringValue
                 }
                 cell.textFieldStartedEditing = {
                     self.currentTextField = cell.rightTextField

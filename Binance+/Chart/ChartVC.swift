@@ -25,6 +25,11 @@ class ChartVC: UIViewController {
     var parentVC: ParentVC!
     
     
+    
+    var priceLineTimer: Timer!
+    
+    
+    
     @IBOutlet weak var superV: UIView!
     @IBOutlet weak var chartView: UIView!
     @IBOutlet weak var rightContainerWidthConstraint: NSLayoutConstraint!
@@ -116,6 +121,11 @@ class ChartVC: UIViewController {
             if let delegate = UIApplication.shared.delegate as? AppDelegate {
                 delegate.candleWebSocket?.open()
             }
+            if priceLineTimer != nil {
+                if let chart = self.chart {
+                    priceLineTimer = Timer.scheduledTimer(timeInterval: TimeInterval(1), target: chart, selector: #selector(chart.handleCandleTimer), userInfo: nil, repeats: true)
+                }
+            }
         }
     }
     
@@ -123,6 +133,9 @@ class ChartVC: UIViewController {
         super.viewWillDisappear(animated)
         if let delegate = UIApplication.shared.delegate as? AppDelegate {
             delegate.candleWebSocket?.close()
+        }
+        if priceLineTimer != nil && priceLineTimer.isValid {
+            priceLineTimer.invalidate()
         }
     }
     
@@ -133,6 +146,10 @@ class ChartVC: UIViewController {
         if let delegate = UIApplication.shared.delegate as? AppDelegate {
             delegate.candleWebSocket?.close()
             delegate.candleWebSocket = nil
+        }
+        if priceLineTimer != nil {
+            priceLineTimer.invalidate()
+            priceLineTimer = nil
         }
         if app == nil {
             tabbarVC = tabBarController as? TabBarVC

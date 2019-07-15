@@ -58,6 +58,9 @@ class ScannerFilter {
             rValue = Decimal(30)
         case .rsi_divergence:
             properties[Indicator.PropertyKey.length] = 14
+            properties[Indicator.PropertyKey.bullishOrBearish] = "Bullish"
+            relationship = .lessThan
+            rValue = Decimal(30)
         case .green_candle:
             rValue = 0
         }
@@ -90,7 +93,7 @@ class ScannerFilter {
         case .rsi:
             return "RSI(\(properties[Indicator.PropertyKey.length] as! Int)) \(relationship.toString()) \(rValue) ; [\(timeframe.rawValue)]"
         case .rsi_divergence:
-            return "RSI Divergence(\(properties[Indicator.PropertyKey.length] as! Int)) ; [\(timeframe.rawValue)]"
+            return "RSI Divergence(\(properties[Indicator.PropertyKey.length] as! Int), \(properties[Indicator.PropertyKey.bullishOrBearish] as! String)) ; [\(timeframe.rawValue)]"
         case .green_candle:
             return "Close - Open \(relationship.toString()) \(rValue) ; [\(timeframe.rawValue)]"
         }

@@ -257,6 +257,8 @@ class Indicator: NSObject, NSCoding {
         static let color_3 = "color_3"
         static let line_width_3 = "line_width_3"
         static let color_4 = "color_4"
+        
+        static let bullishOrBearish = "bullish/bearish"
     }
 }
 

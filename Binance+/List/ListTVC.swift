@@ -49,6 +49,7 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
     
     var timer: Timer!
     
+    // MARK: - Initialization
     override func viewDidLoad() {
         super.viewDidLoad()
         

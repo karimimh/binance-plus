@@ -41,14 +41,15 @@ class MainView: UIView {
         }
     }
     
-    var candleWidth: CGFloat {
+    var wholeCandleWidth: CGFloat {
         get {
             return chart.candleWidth
         }
     }
     
     var spacing: CGFloat = 0
-    
+    var candleWidth: CGFloat = 0
+    var wickWidth: CGFloat = 0.75
     
     var latestCandleX: CGFloat {
         get {
@@ -59,13 +60,15 @@ class MainView: UIView {
         }
     }
     
-    
+    private var currentWholeCandleWidth: CGFloat = 0
     
     //MARK: - Initialization
     init(chart: Chart) {
         self.chart = chart
         self.app = chart.app
         super.init(frame: .zero)
+        
+        currentWholeCandleWidth = wholeCandleWidth
         
         backgroundColor = .clear
         clipsToBounds = true
@@ -81,6 +84,20 @@ class MainView: UIView {
     override func draw(_ rect: CGRect) {
         super.draw(rect)
         
+        if wholeCandleWidth < currentWholeCandleWidth {
+            let diff = currentWholeCandleWidth - wholeCandleWidth
+            if spacing >= diff {
+                spacing -= diff
+            } else {
+                candleWidth = wholeCandleWidth * 3 / 4
+                spacing = wholeCandleWidth * 1 / 4
+            }
+        } else {
+            candleWidth = wholeCandleWidth * 3 / 4
+            spacing = wholeCandleWidth * 1 / 4
+        }
+        currentWholeCandleWidth = wholeCandleWidth
+        
         let ctx = UIGraphicsGetCurrentContext()!
         ctx.setLineWidth(2.0)
         ctx.strokeLineSegments(between: [CGPoint(x: 0, y: rect.height), CGPoint(x: rect.width, y: rect.height)])
@@ -91,7 +108,12 @@ class MainView: UIView {
             let y = self.y(price: candle.high, frameHeight: frame.height, highestPrice: highestPrice, lowestPrice: lowestPrice)
             let h = self.y(price: candle.low, frameHeight: frame.height, highestPrice: highestPrice, lowestPrice: lowestPrice) - y
             
-            draw(candle: candle, in: CGRect(x: candle.x, y: y, width: candleWidth, height: h), using: ctx)
+            if candle.high == candle.low {
+                draw(candle: candle, in: CGRect(x: candle.x - wholeCandleWidth / 2, y: y, width: wholeCandleWidth, height: wickWidth), using: ctx)
+            } else {
+                draw(candle: candle, in: CGRect(x: candle.x - wholeCandleWidth / 2, y: y, width: wholeCandleWidth, height: h), using: ctx)
+            }
+            
         }
         
     }
@@ -117,8 +139,17 @@ class MainView: UIView {
     
     
     private func draw(candle: Candle, in rect: CGRect, using ctx: CGContext) {
-        let candleWidth = rect.width * 3 / 4
         let candleHeight = rect.height
+        
+        let ctx = UIGraphicsGetCurrentContext()!
+        ctx.setLineWidth(0)
+        if candle.high == candle.low {
+            ctx.setFillColor(app.bullCandleColor.cgColor)
+            ctx.fill(CGRect(x: spacing / 2 + rect.origin.x, y: rect.origin.y, width: candleWidth, height: candleHeight))
+            return
+        }
+        
+        
         
         let isGreen = (candle.close >= candle.open)
         let color: UIColor
@@ -127,8 +158,6 @@ class MainView: UIView {
         } else {
             color = app.bearCandleColor
         }
-        
-        let wickWidth: CGFloat = 0.75
         
         
         var bodyHeight = ((candle.close - candle.open) / (candle.high - candle.low)).cgFloatValue * candleHeight
@@ -146,14 +175,16 @@ class MainView: UIView {
         
         
         
-        let ctx = UIGraphicsGetCurrentContext()!
-        ctx.setLineWidth(0)
         ctx.setFillColor(color.cgColor)
         ctx.setLineCap(.round)
         ctx.setLineJoin(.round)
-        ctx.fill(CGRect(x: rect.origin.x + candleWidth / 2 - wickWidth / 2, y: rect.origin.y, width: wickWidth, height: upperWickHeight))
-        ctx.fill(CGRect(x: rect.origin.x, y: rect.origin.y + upperWickHeight, width: candleWidth, height: bodyHeight))
-        ctx.fill(CGRect(x: rect.origin.x + candleWidth / 2 - wickWidth / 2, y: rect.origin.y + upperWickHeight + bodyHeight, width: wickWidth, height: lowerWickHeight))
+        if upperWickHeight > 0 {
+            ctx.fill(CGRect(x: spacing / 2 + rect.origin.x + candleWidth / 2 - wickWidth / 2, y: rect.origin.y, width: wickWidth, height: upperWickHeight))
+        }
+        ctx.fill(CGRect(x: spacing / 2 + rect.origin.x, y: rect.origin.y + upperWickHeight, width: candleWidth, height: bodyHeight))
+        if lowerWickHeight > 0 {
+            ctx.fill(CGRect(x: spacing / 2 + rect.origin.x + candleWidth / 2 - wickWidth / 2, y: rect.origin.y + upperWickHeight + bodyHeight, width: wickWidth, height: lowerWickHeight))
+        }
         
     }
     

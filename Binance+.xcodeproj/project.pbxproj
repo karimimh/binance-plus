@@ -224,6 +224,7 @@
 		A5DD40AF22DC6B480004B78C /* nano.png in Resources */ = {isa = PBXBuildFile; fileRef = A5DD400422DC6B480004B78C /* nano.png */; };
 		A5DD40B022DC6B480004B78C /* storm.png in Resources */ = {isa = PBXBuildFile; fileRef = A5DD400522DC6B480004B78C /* storm.png */; };
 		A5DD40B122DC6B480004B78C /* snt.png in Resources */ = {isa = PBXBuildFile; fileRef = A5DD400622DC6B480004B78C /* snt.png */; };
+		A5DD40B322DC7BBF0004B78C /* PriceLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5DD40B222DC7BBF0004B78C /* PriceLineView.swift */; };
 		A5F4F000226E2598002EEBD2 /* ParentVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5F4EFFF226E2598002EEBD2 /* ParentVC.swift */; };
 		A5FC7BEB227AFE93004CC6F0 /* IndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */; };
 		A5FC7BED227B0705004CC6F0 /* TimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FC7BEC227B0705004CC6F0 /* TimeView.swift */; };
@@ -459,6 +460,7 @@
 		A5DD400422DC6B480004B78C /* nano.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = nano.png; sourceTree = "<group>"; };
 		A5DD400522DC6B480004B78C /* storm.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = storm.png; sourceTree = "<group>"; };
 		A5DD400622DC6B480004B78C /* snt.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = snt.png; sourceTree = "<group>"; };
+		A5DD40B222DC7BBF0004B78C /* PriceLineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceLineView.swift; sourceTree = "<group>"; };
 		A5F4EFFF226E2598002EEBD2 /* ParentVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParentVC.swift; sourceTree = "<group>"; };
 		A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorView.swift; sourceTree = "<group>"; };
 		A5FC7BEC227B0705004CC6F0 /* TimeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeView.swift; sourceTree = "<group>"; };
@@ -583,9 +585,10 @@
 				A577308A2279820A00C08158 /* Chart.swift */,
 				A5FC7D4F2289880D004CC6F0 /* MainView.swift */,
 				A5FC7D51228988AF004CC6F0 /* ValueView.swift */,
-				A5DD3F5922DB41320004B78C /* CrosshairView.swift */,
 				A5FC7BEC227B0705004CC6F0 /* TimeView.swift */,
 				A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */,
+				A5DD3F5922DB41320004B78C /* CrosshairView.swift */,
+				A5DD40B222DC7BBF0004B78C /* PriceLineView.swift */,
 				A5FC7BFC22840CBB004CC6F0 /* Indicator.swift */,
 				A5FC7BFA22830F3F004CC6F0 /* Indicators.swift */,
 				A5630BF02238F628002B0152 /* ChartVC.swift */,
@@ -1099,6 +1102,7 @@
 				A5630BF7223912FE002B0152 /* Util.swift in Sources */,
 				A5BE575A2268798300E4EE09 /* LaunchScene.swift in Sources */,
 				A577308B2279820A00C08158 /* Chart.swift in Sources */,
+				A5DD40B322DC7BBF0004B78C /* PriceLineView.swift in Sources */,
 				A5FC7BEF228023B9004CC6F0 /* ScannerVC.swift in Sources */,
 				A5630BEB2237E5F1002B0152 /* ListTVC.swift in Sources */,
 				A56B86D4226C713D003B153B /* ChooseListVC.swift in Sources */,

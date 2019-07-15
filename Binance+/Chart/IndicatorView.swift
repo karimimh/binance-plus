@@ -85,17 +85,14 @@ class IndicatorView: UIView {
         let ctx = UIGraphicsGetCurrentContext()!
         switch indicatorType {
         case .volume:
-            drawGridLines(using: ctx)
             drawVolume(in: rect, using: ctx)
         case .sma:
             drawSMA(in: rect, using: ctx)
         case .ema:
             drawEMA(in: rect, using: ctx)
         case .rsi:
-            drawGridLines(using: ctx)
             drawRSI(in: rect, using: ctx)
         case .macd:
-            drawGridLines(using: ctx)
             drawMACD(in: rect, using: ctx)
         case .bollinger_bands:
             drawBollingerBands(in: rect, using: ctx)
@@ -131,7 +128,9 @@ class IndicatorView: UIView {
         }
         highestVolume *= 1.2
         valueView.update(newhighestValue: highestVolume, newLowestValue: 0)
-        
+        if highestVolume == 0 {
+            return
+        }
         let color = properties[Indicator.PropertyKey.color_1] as! UIColor
         let smaColor = properties[Indicator.PropertyKey.color_2] as! UIColor
         let smaLineWidth = properties[Indicator.PropertyKey.line_width_1] as! CGFloat
@@ -159,7 +158,7 @@ class IndicatorView: UIView {
         ctx.setStrokeColor(smaColor.cgColor)
         ctx.setLineWidth(smaLineWidth)
         ctx.setLineJoin(.round)
-        
+        ctx.beginPath()
         ctx.move(to: smaPoints[0])
         for i in 0 ..< smaPoints.count {
             ctx.addLine(to: smaPoints[i])
@@ -196,7 +195,7 @@ class IndicatorView: UIView {
         ctx.setStrokeColor(color.cgColor)
         ctx.setLineWidth(lineWidth)
         ctx.setLineJoin(.round)
-        
+        ctx.beginPath()
         ctx.move(to: points[0])
         for i in 0 ..< points.count {
             ctx.addLine(to: points[i])
@@ -232,7 +231,7 @@ class IndicatorView: UIView {
         ctx.setStrokeColor(color.cgColor)
         ctx.setLineWidth(lineWidth)
         ctx.setLineJoin(.round)
-        
+        ctx.beginPath()
         ctx.move(to: points[0])
         for i in 0 ..< points.count {
             ctx.addLine(to: points[i])
@@ -270,7 +269,7 @@ class IndicatorView: UIView {
         ctx.setStrokeColor(color.cgColor)
         ctx.setLineWidth(lineWidth)
         ctx.setLineJoin(.round)
-        
+        ctx.beginPath()
         ctx.move(to: points[0])
         for i in 0 ..< points.count {
             ctx.addLine(to: points[i])
@@ -311,6 +310,11 @@ class IndicatorView: UIView {
         highestMACD = highestMACD + (highestMACD - lowestMACD) * 0.1
         lowestMACD = lowestMACD - (highestMACD - lowestMACD) * 0.1
         valueView.update(newhighestValue: highestMACD, newLowestValue: lowestMACD)
+        
+        if highestMACD == 0 && lowestMACD == 0 {
+            return
+        }
+        
         var macdPoints = [CGPoint]()
         var signalPoints = [CGPoint]()
         var diffPoints = [CGPoint]()
@@ -472,18 +476,6 @@ class IndicatorView: UIView {
     
     
     
-    private func drawGridLines(using ctx: CGContext) {
-        if chart.timeView == nil { return }
-        ctx.setStrokeColor(UIColor.fromHex(hex: "#DFEAF0").withAlphaComponent(0.5).cgColor)
-//        for candle in chart.timeView.gridCandles {
-//            ctx.strokeLineSegments(between: [CGPoint(x: candle.x, y: 0), CGPoint(x: candle.x, y: frame.height)])
-//        }
-//        
-//        for y in valueView.tickYs {
-//            ctx.strokeLineSegments(between: [CGPoint(x: 0, y: y), CGPoint(x: frame.width, y: y)])
-//        }
-        
-    }
     
     
     

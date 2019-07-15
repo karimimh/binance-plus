@@ -139,8 +139,9 @@ class Chart: UIView {
     var crosshairTapGR: UITapGestureRecognizer!
     var crosshairPanGR: UIPanGestureRecognizer!
     
+    var priceLineView: PriceLineView!
+
     
-    var streamingCandle: Candle?
     
     //MARK: - Initialization
     init(frame: CGRect, app: App, chartVC: ChartVC) {
@@ -165,6 +166,20 @@ class Chart: UIView {
         addGestureRecognizer(crosshairPanGR)
         crosshairPanGR.isEnabled = false
         
+        
+        
+        
+        priceLineView = PriceLineView(chart: self)
+        addSubview(priceLineView)
+        priceLineView.translatesAutoresizingMaskIntoConstraints = false
+        priceLineView.leadingAnchor.constraint(equalTo: leadingAnchor).isActive = true
+        priceLineView.trailingAnchor.constraint(equalTo: trailingAnchor).isActive = true
+        priceLineView.topAnchor.constraint(equalTo: topAnchor).isActive = true
+        priceLineView.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
+        priceLineView.isEnabled = true
+        
+        
+        chartVC.priceLineTimer = Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: #selector(handleCandleTimer), userInfo: nil, repeats: true)
         self.clipsToBounds = true
         self.backgroundColor = .white
         additionalInit()
@@ -257,7 +272,6 @@ class Chart: UIView {
             }
             let candle = Candle(symbol: self.symbol, timeframe: Timeframe(rawValue: interval)!, open: open, high: high, low: low, close: close, volume: baseAssetVolume, openTime: Date(timeIntervalSince1970: TimeInterval(openTime) / 1000), closeTime: Date(timeIntervalSince1970: TimeInterval(closeTime) / 1000), quoteAssetVolume: quoteAssetVolume, numberOfTrades: numberOfTrades, takerBuyBaseAssetVolume: 0, takerBuyQuoteAssetVolume: 0)
             
-            self.streamingCandle = candle
             if nextCandleOpen == openTime {
                 self.candles.append(candle)
                 self.processVisibleCandles()
@@ -324,6 +338,7 @@ class Chart: UIView {
             }
         }
         bringSubviewToFront(mainView)
+        bringSubviewToFront(priceLineView)
         bringSubviewToFront(crosshair)
     }
     
@@ -482,11 +497,11 @@ class Chart: UIView {
             w = mainView.bounds.width
         }
         
-        if latestX <= w && latestX + candleWidth >= 0 {
+        if latestX - candleWidth / 2 <= w && latestX + candleWidth / 2 >= 0 {
             latestVisibleCandleIndex = candles.count - 1
             let numberOfVisibleCandles = Int(latestX / candleWidth) + 1
             firstVisibleCandleIndex = latestVisibleCandleIndex - numberOfVisibleCandles
-        } else if latestX + candleWidth < 0 {
+        } else if latestX + candleWidth / 2 < 0 {
             latestVisibleCandleIndex = -1
             firstVisibleCandleIndex = -1
         } else {
@@ -865,7 +880,9 @@ class Chart: UIView {
     
     
     
-    
+    @IBAction func handleCandleTimer() {
+        priceLineView.setNeedsDisplay()
+    }
     
     
     

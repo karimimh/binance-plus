@@ -69,7 +69,7 @@ class App: NSObject, NSCoding {
     var lists = [List]()
     var allBinanceSymbols = [Symbol]()
     
-    
+    var serverTimeOffset: Int64 = 0
     //MARK: Types
     struct Key {
         static let allBinanceSymbols = "allBinanceSymbols"
@@ -108,7 +108,11 @@ class App: NSObject, NSCoding {
     //MARK: - Initialization
     override init() {
         super.init()
-        
+        BinanaceApi.getServerTime { (optionalDate) in
+            if let date = optionalDate {
+                self.serverTimeOffset = Date().toMillis() - date.toMillis()
+            }
+        }
         BinanaceApi.currentAvgPrice(for: "BTCUSDT", completion: { (p) in
             if let price = p {
                 self.btcPrice = price
