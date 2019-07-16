@@ -45,9 +45,9 @@ class ChartVC: UIViewController {
     
     var indicatorsVC: IndicatorsVC!
     var activeIndicator: Indicator?
-    
+    var navBarShadowLayer: CAShapeLayer!
     var colorPalletCVCCompletion: ((UIColor?) -> Void)?
-    var blurEffectView: UIVisualEffectView!
+    var coverView: UIView!
     var panBeganRightContainerX: CGFloat = 0
     
     
@@ -77,7 +77,7 @@ class ChartVC: UIViewController {
         
         let navBar = navigationController!.navigationBar
         
-        let navBarShadowLayer = CAShapeLayer()
+        navBarShadowLayer = CAShapeLayer()
         navBarShadowLayer.path = UIBezierPath(rect: navBar.bounds).cgPath
         navBarShadowLayer.shadowColor = UIColor.gray.cgColor
         navBarShadowLayer.shadowPath = navBarShadowLayer.path
@@ -232,7 +232,7 @@ class ChartVC: UIViewController {
         navigationItem.leftBarButtonItems = [symbolBBI, timeframeBBI]
         
         
-        settingsBBI = UIBarButtonItem(image: UIImage(named: "menu"), style: .plain, target: self, action: #selector(indicatorsBBIClicked(_:)))
+        settingsBBI = UIBarButtonItem(image: UIImage(named: "menu"), style: .plain, target: self, action: #selector(settingsBBIClicked(_:)))
         
         
         
@@ -250,15 +250,23 @@ class ChartVC: UIViewController {
     @IBAction func timeframeBBIClicked(_ sender: UIBarButtonItem) {
         var options: [String] = Timeframe.allValues()
         parentVC.slideUpOptionsChooser(options: options, title: "Select Timeframe") { (index) in
+            if self.priceLineTimer != nil && self.priceLineTimer.isValid {
+                self.priceLineTimer.invalidate()
+            }
+            self.chart.removeFromSuperview()
+            self.chart = nil
+            self.chartView.setNeedsLayout()
             self.app.chartTimeframe = Timeframe(rawValue: options[index])!
             self.timeframeBBI.title = options[index]
             self.app.save()
-            self.reloadChart()
+            DispatchQueue.main.async {
+                self.reloadChart()
+            }
         }
         
     }
 
-    @IBAction func indicatorsBBIClicked(_ sender: UIBarButtonItem) {
+    @IBAction func settingsBBIClicked(_ sender: UIBarButtonItem) {
         if chart == nil { return }
         indicatorsVC.indicatorsTableView.reloadData()
         if !isRightContainerShowing {
@@ -274,35 +282,33 @@ class ChartVC: UIViewController {
     //MARK: - SlideLeft
 
     func slideLeft() {
+        navBarShadowLayer.isHidden = true
         timeframeBBI.isEnabled = false
         symbolBBI.isEnabled = false
         isRightContainerShowing = true
         rightContainerLeadingConstraint.constant = -rightContainerBestWidth
-        
-        let blurEffect = UIBlurEffect(style: .prominent)
-        blurEffectView = UIVisualEffectView(effect: blurEffect)
-        blurEffectView.frame = chartView.bounds
-        blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        blurEffectView.alpha = 0.5
+
+        coverView = UIView(frame: chartView.bounds)
         
         UIView.animate(withDuration: 0.2, delay: 0, options: .transitionCurlUp, animations: {
              self.view.layoutIfNeeded()
         }) { (_) in
-            self.chartView.addSubview(self.blurEffectView)
-            self.blurEffectView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.handleTap(_:))))
-            self.blurEffectView.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(self.handlePan(_:))))
+            self.chartView.addSubview(self.coverView)
+            self.coverView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(self.handleTap(_:))))
+            self.coverView.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(self.handlePan(_:))))
         }
     }
     
     
     func slideRight(completion: @escaping () -> Void = {}) {
+        navBarShadowLayer.isHidden = false
         isRightContainerShowing = false
         rightContainerLeadingConstraint.constant = 15
         
         UIView.animate(withDuration: 0.2, delay: 0, options: .transitionCurlUp, animations: {
             self.view.layoutIfNeeded()
         }) { (_) in
-            self.blurEffectView.removeFromSuperview()
+            self.coverView.removeFromSuperview()
             self.timeframeBBI.isEnabled = true
             self.symbolBBI.isEnabled = true
             self.app.save()

@@ -128,8 +128,6 @@ class Candle: Equatable, NSCoding {
     }
     
     func nextCandleOpenTime() -> Date {
-//        var calendar = Calendar(identifier: .gregorian)
-//         calendar.timeZone = TimeZone(secondsFromGMT: 0)!// utc
         let calendar = Calendar.current
         
         switch timeframe {

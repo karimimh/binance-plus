@@ -265,6 +265,7 @@ class Chart: UIView {
             
             if symbolName != self.symbol.name || interval != self.timeframe.rawValue ||
                 (latestCandleOpen != openTime && nextCandleOpen != openTime) {
+                print("** ", symbolName, ", ", interval, ", ", openTime, ", ", latestCandleOpen, ", ", nextCandleOpen, " **")
                 DispatchQueue.main.async {
                     self.chartVC.reloadChart()
                 }
@@ -447,6 +448,7 @@ class Chart: UIView {
             iv.update()
         }
         crosshair.setNeedsDisplay()
+        priceLineView.update()
     }
     
     
@@ -525,9 +527,9 @@ class Chart: UIView {
         let w = self.bounds.width
         let h = self.bounds.height
         
-        for candle in timeView.gridCandles {
-            path.move(to: CGPoint(x: candle.x, y: 0))
-            path.addLine(to: CGPoint(x: candle.x, y: h))
+        for x in timeView.gridXs {
+            path.move(to: CGPoint(x: x, y: 0))
+            path.addLine(to: CGPoint(x: x, y: h))
         }
 
         for y in priceView.tickYs {
@@ -772,8 +774,12 @@ class Chart: UIView {
                 update()
                 
             } else {
-                crosshair.position = CGPoint(x: visibleCandles[visibleCandles.count / 2].x, y: mainView.frame.minX + mainView.frame.height / 2)
-                crosshair.initialPosition = CGPoint(x: visibleCandles[visibleCandles.count / 2].x, y: mainView.frame.minX + mainView.frame.height / 2)
+                let dx = longPressBeganX - visibleCandles.first!.x
+                let n = Int(dx / candleWidth)
+                let initPosX = visibleCandles.first!.x + CGFloat(n) * candleWidth
+                let initPosY = longPressBeganY
+                crosshair.position = CGPoint(x: initPosX, y: initPosY)
+                crosshair.initialPosition = CGPoint(x: initPosX, y: initPosY)
                 crosshair.isEnabled = true
                 
                 update()
@@ -792,13 +798,17 @@ class Chart: UIView {
                 setupConstraints()
                 update()
             } else if crosshair.isEnabled {
-                let newY = crosshair.initialPosition.y - dy
+                var newY = crosshair.initialPosition.y - dy
                 let n = Int(dx / candleWidth)
-                let newX = crosshair.initialPosition.x - CGFloat(n) * candleWidth
-                if newX <= visibleCandles.last!.x && newX >= visibleCandles.first!.x {
-                    crosshair.position = CGPoint(x: newX, y: newY)
-                    update()
+                var newX = crosshair.initialPosition.x - CGFloat(n) * candleWidth
+                if !(newX <= mainView.bounds.width && newX >= 0) {
+                    newX = crosshair.position.x
                 }
+                if !(newY >= 0 && newY < timeView.frame.origin.y) {
+                    newY = crosshair.position.y
+                }
+                crosshair.position = CGPoint(x: newX, y: newY)
+                update()
             }
         case .ended, .cancelled, .failed:
             if crosshair.isEnabled {
@@ -850,13 +860,17 @@ class Chart: UIView {
         case .began:
             crosshair.initialPosition = CGPoint(x: crosshair.position.x, y: crosshair.position.y)
         case .changed:
-            let newY = crosshair.initialPosition.y + dy
+            var newY = crosshair.initialPosition.y + dy
             let n = Int(dx / candleWidth)
-            let newX = crosshair.initialPosition.x + CGFloat(n) * candleWidth
-            if newX <= visibleCandles.last!.x && newX >= visibleCandles.first!.x {
-                crosshair.position = CGPoint(x: newX, y: newY)
-                update()
+            var newX = crosshair.initialPosition.x + CGFloat(n) * candleWidth
+            if !(newX <= mainView.bounds.width && newX >= 0) {
+                newX = crosshair.position.x
             }
+            if !(newY >= 0 && newY < timeView.frame.origin.y) {
+                newY = crosshair.position.y
+            }
+            crosshair.position = CGPoint(x: newX, y: newY)
+            update()
         case .ended, .failed, .cancelled:
             break
         default:
@@ -876,14 +890,17 @@ class Chart: UIView {
         }
         update()
     }
-    //MARK: - Private Methods
     
     
     
     @IBAction func handleCandleTimer() {
-        priceLineView.setNeedsDisplay()
+        priceLineView.update()
     }
     
+    
+    
+    
+    //MARK: - Private Methods
     
     
     private func getUnMarginedHighestPrice() -> Decimal {

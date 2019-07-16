@@ -62,10 +62,12 @@ class PriceLineView: UIView {
         str.draw(in: strRect)
         
         
-        
+        if chart.timeframe == .weekly || chart.timeframe == .monthly || chart.timeframe == .threeDaily {
+            return
+        }
         let time = Date(milliseconds: Date().toMillis() - chart.app.serverTimeOffset)
         let calendar = Calendar.current
-        let comps = calendar.dateComponents([.hour, .minute, .second], from: time, to: chart.visibleCandles.last!.nextCandleOpenTime().utcToLocal())
+        let comps = calendar.dateComponents([.hour, .minute, .second], from: time, to: chart.candles.last!.nextCandleOpenTime().utcToLocal())
         var hour = comps.hour ?? 0
         var minute = comps.minute ?? 0
         var second = comps.second ?? 0
@@ -102,6 +104,11 @@ class PriceLineView: UIView {
         }
         
         
+    }
+    
+    
+    func update() {
+        setNeedsDisplay()
     }
     
     private func y(price: Decimal, frameHeight: CGFloat, highestPrice: Decimal, lowestPrice: Decimal) -> CGFloat {

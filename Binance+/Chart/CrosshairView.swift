@@ -13,7 +13,6 @@ class CrosshairView: UIView {
     var initialPosition = CGPoint.zero
     var isEnabled = false
     
-    var currentCandle: Candle!
     
     let chart: Chart
     
@@ -49,20 +48,18 @@ class CrosshairView: UIView {
         
         ctx.setLineDash(phase: 0, lengths: [5.0, 3.0])
         ctx.setLineWidth(0.75)
-        ctx.setStrokeColor(UIColor.blue.cgColor)
+        ctx.setStrokeColor(UIColor.black.cgColor)
         
         path.stroke()
         
         
         //Draw Time:
-        let n = Int((chart.visibleCandles.last!.x - position.x) / chart.candleWidth)
-        let index = chart.visibleCandles.count - 1 - n
-        currentCandle = chart.visibleCandles[index]
-        let string = timeToText(candle: currentCandle)
+        let index = Int((position.x - chart.visibleCandles.first!.x) / chart.candleWidth)
+        let string = timeToText(tick: index)
         let stringSize = string.size()
-        let bgTRect = CGRect(x: currentCandle.x - stringSize.width / 2, y: chart.timeView.frame.origin.y, width: stringSize.width, height: TimeView.getHeight())
-        let strRect = CGRect(x: currentCandle.x - stringSize.width / 2, y: chart.timeView.frame.origin.y + (TimeView.getHeight() - stringSize.height) / 2, width: stringSize.width, height: stringSize.height)
-        ctx.setFillColor(UIColor.brown.withAlphaComponent(0.75).cgColor)
+        let bgTRect = CGRect(x: position.x - stringSize.width / 2, y: chart.timeView.frame.origin.y, width: stringSize.width, height: TimeView.getHeight())
+        let strRect = CGRect(x: position.x - stringSize.width / 2, y: chart.timeView.frame.origin.y + (TimeView.getHeight() - stringSize.height) / 2, width: stringSize.width, height: stringSize.height)
+        ctx.setFillColor(UIColor.black.withAlphaComponent(0.75).cgColor)
         ctx.fill(bgTRect)
         string.draw(in: strRect)
         
@@ -77,7 +74,7 @@ class CrosshairView: UIView {
             
             let strRect = CGRect(x: self.frame.width + 6 - strWidth, y: position.y - strHeight / 2, width: strWidth, height: strHeight)
             let bgRect = CGRect(x: self.frame.width - strWidth, y: position.y - strHeight * 0.75, width: strWidth, height: strHeight * 1.5)
-            ctx.setFillColor((currentCandle.isGreen() ? chart.app.bullCandleColor : chart.app.bearCandleColor).cgColor)
+            ctx.setFillColor(UIColor.black.withAlphaComponent(0.75).cgColor)
             ctx.fill(bgRect)
             ctx.setStrokeColor(UIColor.white.cgColor)
             ctx.strokeLineSegments(between: [CGPoint(x: self.frame.width - strWidth, y: position.y), CGPoint(x: self.frame.width - strWidth + 6, y: position.y)])
@@ -142,8 +139,16 @@ class CrosshairView: UIView {
     }
     
     
-    func timeToText(candle: Candle) -> NSAttributedString {
-        let time = candle.openTime
+    func timeToText(tick: Int) -> NSAttributedString {
+        var time: Date
+        if tick < chart.visibleCandles.count {
+            time = chart.visibleCandles[tick].openTime
+        } else {
+            time = chart.visibleCandles.last!.openTime
+            for _ in chart.visibleCandles.count ... tick {
+                time = time.nextCandleOpenTime(timeframe: chart.timeframe)
+            }
+        }
         let timeLocal = time.utcToLocal()
         let day = Calendar.current.component(.day, from: time)
         let month = Calendar.current.component(.month, from: time)

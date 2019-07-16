@@ -225,6 +225,7 @@ class ScannerVC: UIViewController, UITableViewDelegate, UITableViewDataSource  {
                 let bullOrBear = filter.properties[Indicator.PropertyKey.bullishOrBearish] as! String
                 
                 var x = rsi.count - 2
+                var foundX = false
                 while x > rsi.count - 6 && x > 2 {
                     if bullOrBear == "Bullish" {
                         if rsi[x] > filter.rValue {
@@ -238,12 +239,16 @@ class ScannerVC: UIViewController, UITableViewDelegate, UITableViewDataSource  {
                         }
                     }
                     if rsi[x] < rsi[x - 1] && rsi[x] < rsi[x + 1] && data[x] < data[x + 1] && data[x] < data[x - 1] {
+                        foundX = true
                         break
                     }
                     
                     x -= 1
                 }
-                
+                if !foundX {
+                    removedSymbols.append(symbolName)
+                    continue
+                }
                 var y = x - 2
                 var divIndex = -1
                 while y > 0 {

@@ -30,7 +30,7 @@ class TimeView: UIView {
     var ticks = Set<Int>()
     
     //for grids:
-    var gridCandles = [Candle]()
+    var gridXs = [CGFloat]()
     
     init(chart: Chart) {
         self.chart = chart
@@ -52,7 +52,7 @@ class TimeView: UIView {
         let visibleCandles = self.visibleCandles
         if visibleCandles.isEmpty { return }
         findTicks()
-        gridCandles.removeAll()
+        gridXs.removeAll()
         
         let ctx = UIGraphicsGetCurrentContext()!
         ctx.setLineWidth(2.0)
@@ -62,11 +62,16 @@ class TimeView: UIView {
         
         var stringRects = [CGRect]()
         for tick in ticks {
-            let candle = visibleCandles[tick]
+            var x: CGFloat
+            if tick < visibleCandles.count {
+                x = visibleCandles[tick].x
+            } else {
+                x = visibleCandles.last!.x + CGFloat(tick - visibleCandles.count + 1) * candleWidth
+            }
             
             let string = getTickAttributedString(text: tickToText(tick: tick))
             let stringSize = string.size()
-            let stringRect = CGRect(x: candle.x - stringSize.width / 2, y: stringSize.height, width: stringSize.width, height: stringSize.height)
+            let stringRect = CGRect(x: x - stringSize.width / 2, y: stringSize.height, width: stringSize.width, height: stringSize.height)
             
             var enoughSpaceToAddTick = true
             for r in stringRects {
@@ -82,10 +87,10 @@ class TimeView: UIView {
             stringRects.append(stringRect)
             
             ctx.setStrokeColor(UIColor.black.cgColor)
-            ctx.strokeLineSegments(between: [CGPoint(x: candle.x, y: 0), CGPoint(x: candle.x, y: stringSize.height * 0.6)])
+            ctx.strokeLineSegments(between: [CGPoint(x: x, y: 0), CGPoint(x: x, y: stringSize.height * 0.6)])
             
             string.draw(in: stringRect)
-            gridCandles.append(candle)
+            gridXs.append(x)
         }
         chart.drawGridLines()
     }
@@ -108,7 +113,7 @@ class TimeView: UIView {
         
         let visibleCandles = self.visibleCandles
         
-        let minDistance = getTickAttributedString(text: "20:30").size().width * 2.5
+        let minDistance = getTickAttributedString(text: "20:30").size().width * 2
         let minDistanceTimeSpan = CGFloat(timeframe.toMinutes()) * minDistance / candleWidth
         
         var _2y = [Int]()
@@ -148,15 +153,19 @@ class TimeView: UIView {
         }
         
         
-        
-        for i in 0..<visibleCandles.count {
-            let candle = visibleCandles[i]
-            let candleDate = candle.openTime
-            let minute = Calendar.current.component(.minute, from: candleDate)
-            let hour = Calendar.current.component(.hour, from: candleDate)
-            let day = Calendar.current.component(.day, from: candleDate)
-            let month = Calendar.current.component(.month, from: candleDate)
-            let year = Calendar.current.component(.year, from: candleDate)
+        var date: Date = visibleCandles.first!.openTime
+        var i = 0
+        while candleWidth * CGFloat(i) < chart.mainView.bounds.width {
+            if i < visibleCandles.count {
+                date = visibleCandles[i].openTime
+            } else {
+                date = date.nextCandleOpenTime(timeframe: timeframe)
+            }
+            let minute = Calendar.current.component(.minute, from: date)
+            let hour = Calendar.current.component(.hour, from: date)
+            let day = Calendar.current.component(.day, from: date)
+            let month = Calendar.current.component(.month, from: date)
+            let year = Calendar.current.component(.year, from: date)
             
             
             
@@ -262,6 +271,7 @@ class TimeView: UIView {
             }
             //1m
             _1m.append(i)
+            i += 1
         }
         
         
@@ -274,9 +284,17 @@ class TimeView: UIView {
     
     
     func tickToText(tick: Int) -> String {
-        let candle = visibleCandles[tick]
+        var time: Date
+        if tick < visibleCandles.count {
+            time = visibleCandles[tick].openTime
+        } else {
+            time = visibleCandles.last!.openTime
+            for _ in visibleCandles.count ... tick {
+                time = time.nextCandleOpenTime(timeframe: timeframe)
+            }
+        }
         
-        let time = candle.openTime
+        
         let timeLocal = time.utcToLocal()
         var text = ""
         let minute = Calendar.current.component(.minute, from: time)
