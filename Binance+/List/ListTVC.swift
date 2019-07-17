@@ -257,13 +257,19 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         guard let symbol = getSymbol(cell.nameLabel.text!) else { return }
         if !isEditing {
             parentVC.slideRightPanGR.isEnabled = false
-            app.chartSymbol = symbol.name
-            tabBarVC.selectedIndex = 1
-            guard let navVC = tabBarVC.viewControllers?[1] as? UINavigationController else { print("no nav!");return }
-            guard let vc = navVC.visibleViewController as? ChartVC else { print("NoChartVC"); return }
-            if vc.chartView != nil {
-                vc.reloadChart()
+            if app.chartSymbol != symbol.name {
+                app.chartSymbol = symbol.name
             }
+            tabBarVC.selectedIndex = 1
+//            guard let navVC = tabBarVC.viewControllers?[1] as? UINavigationController else { print("no nav!");return }
+//            guard let vc = navVC.visibleViewController as? ChartVC else { print("NoChartVC"); return }
+//            vc.priceLineTimer?.invalidate()
+//            vc.priceLineTimer = nil
+//            vc.candleWebSocket?.close()
+//            vc.candleWebSocket = nil
+//            if vc.chartView != nil {
+//                vc.reloadChart()
+//            }
         } else {
             if !selectedSymbols.contains(symbol.name) {
                 selectedSymbols.append(symbol.name)

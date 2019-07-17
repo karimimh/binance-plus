@@ -140,7 +140,7 @@ class Chart: UIView {
     var crosshairPanGR: UIPanGestureRecognizer!
     
     var priceLineView: PriceLineView!
-
+    var isInitializationComplete = false
     
     
     //MARK: - Initialization
@@ -241,66 +241,7 @@ class Chart: UIView {
         addGestureRecognizer(longPressGR)
         
         chartAndIndicatorViewGestureRecognizers.append(contentsOf: [gr1, gr2, gr3, gr4])
-        BinanaceApi.candlestickStream(symbolName: symbol.name, timeframe: timeframe) { (optionalJSON) in
-            guard let json = optionalJSON else { return }
-            let symbolName = json["s"] as! String
-            let kline = json["k"] as! [String: Any]
-            
-            let openTime = kline["t"] as! Int64
-            let closeTime = kline["T"] as! Int64
-            let interval = kline["i"] as! String
-            
-            let open = Decimal(string: kline["o"] as! String)!
-            let close = Decimal(string: kline["c"] as! String)!
-            let high = Decimal(string: kline["h"] as! String)!
-            let low = Decimal(string: kline["l"] as! String)!
-            
-            let baseAssetVolume = Decimal(string: kline["v"] as! String)!
-            let numberOfTrades = kline["n"] as! Int64
-//            let isThisKLineClosed = kline["x"] as! Bool
-            let quoteAssetVolume = Decimal(string: kline["q"] as! String)!
-            
-            let latestCandleOpen = self.candles.last!.openTime.utcToLocal().toMillis()
-            let nextCandleOpen = self.candles.last!.nextCandleOpenTime().utcToLocal().toMillis()
-            
-            if symbolName != self.symbol.name || interval != self.timeframe.rawValue ||
-                (latestCandleOpen != openTime && nextCandleOpen != openTime) {
-                print("** ", symbolName, ", ", interval, ", ", openTime, ", ", latestCandleOpen, ", ", nextCandleOpen, " **")
-                DispatchQueue.main.async {
-                    self.chartVC.reloadChart()
-                }
-                return
-            }
-            let candle = Candle(symbol: self.symbol, timeframe: Timeframe(rawValue: interval)!, open: open, high: high, low: low, close: close, volume: baseAssetVolume, openTime: Date(timeIntervalSince1970: TimeInterval(openTime) / 1000), closeTime: Date(timeIntervalSince1970: TimeInterval(closeTime) / 1000), quoteAssetVolume: quoteAssetVolume, numberOfTrades: numberOfTrades, takerBuyBaseAssetVolume: 0, takerBuyQuoteAssetVolume: 0)
-            
-            if nextCandleOpen == openTime {
-                self.candles.append(candle)
-                self.processVisibleCandles()
-                for indicator in self.indicators {
-                    indicator.calculateIndicatorValue(candles: self.candles)
-                }
-                DispatchQueue.main.async {
-                    self.update()
-                }
-            } else {
-                self.candles[self.candles.count - 1].closeTime =  Date(timeIntervalSince1970: TimeInterval(closeTime) / 1000)
-                self.candles[self.candles.count - 1].open = open
-                self.candles[self.candles.count - 1].close = close
-                self.candles[self.candles.count - 1].high = high
-                self.candles[self.candles.count - 1].low = low
-                self.candles[self.candles.count - 1].volume = baseAssetVolume
-                self.candles[self.candles.count - 1].quoteAssetVolume = quoteAssetVolume
-                self.candles[self.candles.count - 1].numberOfTrades = numberOfTrades
-                self.processVisibleCandles()
-                for indicator in self.indicators {
-                    indicator.calculateIndicatorValue(candles: self.candles)
-                }
-                DispatchQueue.main.async {
-                    self.update()
-                }
-            }
-            
-        }
+        isInitializationComplete = true
     }
     
     
@@ -449,10 +390,11 @@ class Chart: UIView {
         }
         crosshair.setNeedsDisplay()
         priceLineView.update()
+        
     }
     
     
-    private func processVisibleCandles() {
+    func processVisibleCandles() {
         visibleCandles.removeAll()
         calculateLatestVisibleCandleIndex()
         if latestVisibleCandleIndex < 0 {

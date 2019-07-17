@@ -56,9 +56,9 @@ class ChartSymbolVC: UIViewController, UITableViewDataSource, UITableViewDelegat
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         guard let app = self.app else { return }
-        guard let chartVC = self.chartVC else { return }
-        app.chartSymbol = symbols[indexPath.row]
-        chartVC.reloadChart()
+        if symbols[indexPath.row] != app.chartSymbol {
+            app.chartSymbol = symbols[indexPath.row]
+        }
         self.dismiss(animated: true, completion: nil)
     }
     

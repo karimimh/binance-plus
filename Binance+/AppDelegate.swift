@@ -13,8 +13,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
     var app: App?
+    var parentVC: ParentVC?
     var webSocket: WebSocket?
-    var candleWebSocket: WebSocket?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
@@ -32,9 +32,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if let webSocket = self.webSocket {
             webSocket.close()
         }
-        if let cws = candleWebSocket {
-            cws.close()
-        }
         
     }
 
@@ -47,9 +44,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if let webSocket = self.webSocket {
             webSocket.open()
         }
-        if let cws = candleWebSocket {
-            cws.open()
-        }
     }
 
     func applicationWillTerminate(_ application: UIApplication) {
@@ -59,9 +53,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         if let webSocket = self.webSocket {
             webSocket.close()
-        }
-        if let cws = candleWebSocket {
-            cws.close()
         }
     }
 

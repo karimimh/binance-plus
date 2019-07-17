@@ -325,11 +325,7 @@ class BinanaceApi {
         task.resume()
     }
     
-    static func candlestickStream(symbolName: String, timeframe: Timeframe, completion: @escaping ([String: Any]?) -> Void) {
-        if let delegate = UIApplication.shared.delegate as? AppDelegate {
-            delegate.candleWebSocket?.close()
-            delegate.candleWebSocket = nil
-        }
+    static func candlestickStream(symbolName: String, timeframe: Timeframe, completion: @escaping (WebSocket?, [String: Any]?) -> Void) {
         let url = "wss://stream.binance.com:9443/ws/\(symbolName.lowercased())@kline_\(timeframe.rawValue)"
         let webSocket = WebSocket(url)
         webSocket.event.message = { msg in
@@ -339,17 +335,12 @@ class BinanaceApi {
             
             do {
                 if let json = try JSONSerialization.jsonObject(with: message.data(using: .utf8)!, options: []) as? [String: Any] {
-                    completion(json)
+                    completion(webSocket, json)
                 } else {
-                    completion(nil)
+                    completion(webSocket, nil)
                 }
             } catch {
-                completion(nil)
-            }
-        }
-        webSocket.event.open = {
-            if let delegate = UIApplication.shared.delegate as? AppDelegate {
-                delegate.candleWebSocket = webSocket
+                completion(webSocket, nil)
             }
         }
     }

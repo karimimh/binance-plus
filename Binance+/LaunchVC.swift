@@ -176,6 +176,10 @@ class LaunchVC: UIViewController {
         DispatchQueue.main.async {
             let vc = self.storyboard?.instantiateViewController(withIdentifier: "ParentVC") as! ParentVC
             vc.app = self.app
+            if let delegate = UIApplication.shared.delegate as? AppDelegate {
+                delegate.app = self.app
+                delegate.parentVC = vc
+            }
             self.present(vc, animated: true, completion: completion)
         }
     }

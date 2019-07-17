@@ -13,6 +13,7 @@ class CrosshairView: UIView {
     var initialPosition = CGPoint.zero
     var isEnabled = false
     
+    var currentCandleIndex = -1
     
     let chart: Chart
     
@@ -54,8 +55,8 @@ class CrosshairView: UIView {
         
         
         //Draw Time:
-        let index = Int((position.x - chart.visibleCandles.first!.x) / chart.candleWidth)
-        let string = timeToText(tick: index)
+        currentCandleIndex = Int((position.x - chart.visibleCandles.first!.x) / chart.candleWidth)
+        let string = timeToText(tick: currentCandleIndex)
         let stringSize = string.size()
         let bgTRect = CGRect(x: position.x - stringSize.width / 2, y: chart.timeView.frame.origin.y, width: stringSize.width, height: TimeView.getHeight())
         let strRect = CGRect(x: position.x - stringSize.width / 2, y: chart.timeView.frame.origin.y + (TimeView.getHeight() - stringSize.height) / 2, width: stringSize.width, height: stringSize.height)

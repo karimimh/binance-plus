@@ -115,7 +115,6 @@ class IndicatorView: UIView {
     
     
     
-    
     //MARK: - Private Methods
     
     private func drawVolume(in rect: CGRect, using ctx: CGContext) {
