@@ -113,8 +113,56 @@ class MainView: UIView {
             } else {
                 draw(candle: candle, in: CGRect(x: candle.x - wholeCandleWidth / 2, y: y, width: wholeCandleWidth, height: h), using: ctx)
             }
-            
         }
+        
+
+        //Draw Title, Value:
+        
+        let titleString = getMutableAttString(text: symbol.name, color: UIColor.black)
+        if chart.crosshair.isEnabled {
+            let candleIndex = chart.crosshair.currentCandleIndex
+            let candle: Candle
+            if candleIndex < visibleCandles.count && candleIndex >= 0 {
+                candle = chart.visibleCandles[candleIndex]
+            } else {
+                candle = chart.candles.last!
+            }
+            let candleColor = candle.getColor(app)
+            titleString.append(getAttString(text: "\nO: ", color: UIColor.gray.withAlphaComponent(0.75)))
+            titleString.append(getAttString(text: "\(symbol.priceFormatted(candle.open))  ", color: candleColor))
+            titleString.append(getAttString(text: "H: ", color: UIColor.gray.withAlphaComponent(0.75)))
+            titleString.append(getAttString(text: "\(symbol.priceFormatted(candle.high))  ", color: candleColor))
+            titleString.append(getAttString(text: "L: ", color: UIColor.gray.withAlphaComponent(0.75)))
+            titleString.append(getAttString(text: "\(symbol.priceFormatted(candle.low))  ", color: candleColor))
+            titleString.append(getAttString(text: "C: ", color: UIColor.gray.withAlphaComponent(0.75)))
+            titleString.append(getAttString(text: "\(symbol.priceFormatted(candle.close))", color: candleColor))
+            
+            for indicator in chart.indicators {
+                if indicator.frameRow != 0 { continue }
+                titleString.append(getAttString(text: "\n" + indicator.getNameInFunctionForm(), color: UIColor.black))
+                switch indicator.indicatorType {
+                case .bollinger_bands:
+                    let color = (indicator.properties[Indicator.PropertyKey.color_1] as! UIColor)
+                    let bb = indicator.indicatorValue[candle.openTime] as! (Decimal, Decimal, Decimal)
+                    titleString.append(getAttString(text: "  \(symbol.priceFormatted(bb.0))", color: color))
+//                    titleString.append(getAttString(text: "  \(symbol.priceFormatted(bb.1))", color: color.withAlphaComponent(0.7)))
+                    titleString.append(getAttString(text: "  \(symbol.priceFormatted(bb.2))", color: color))
+                case .sma:
+                    let color = indicator.properties[Indicator.PropertyKey.color_1] as! UIColor
+                    let sma = indicator.indicatorValue[candle.openTime] as! Decimal
+                    titleString.append(getAttString(text: "  \(symbol.priceFormatted(sma))", color: color))
+                case .ema:
+                    let color = indicator.properties[Indicator.PropertyKey.color_1] as! UIColor
+                    let ema = indicator.indicatorValue[candle.openTime] as! Decimal
+                    titleString.append(getAttString(text: "  \(symbol.priceFormatted(ema))", color: color))
+                default:
+                    break
+                }
+            }
+        }
+        let stringSize = titleString.size()
+        let stringRect = CGRect(x: 5, y: 5, width: stringSize.width, height: stringSize.height)
+        titleString.draw(in: stringRect)
         
     }
     
@@ -189,7 +237,29 @@ class MainView: UIView {
     }
     
     
+    private func getAttString(text: String, color: UIColor) -> NSAttributedString {
+        let attributes = [
+            NSAttributedString.Key.font: UIFont.systemFont(ofSize: 11.0),
+            NSAttributedString.Key.foregroundColor: color
+        ]
+        
+        let string = NSAttributedString(string: text, attributes: attributes)
+        return string
+    }
     
+    private func getMutableAttString(text: String, color: UIColor) -> NSMutableAttributedString {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .left
+        
+        let attributes: [NSAttributedString.Key: Any] = [
+            .paragraphStyle: paragraphStyle,
+            .font: UIFont.systemFont(ofSize: 11.0),
+            .foregroundColor: color,
+        ]
+        
+        let string = NSMutableAttributedString(string: text, attributes: attributes)
+        return string
+    }
 
 
 }

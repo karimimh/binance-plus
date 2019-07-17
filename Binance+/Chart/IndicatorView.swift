@@ -27,6 +27,9 @@ class IndicatorView: UIView {
             return indicator.properties
         }
     }
+    var symbol: Symbol {
+        return chart.symbol
+    }
     var indicator: Indicator
     
     var valueView: ValueView
@@ -101,6 +104,48 @@ class IndicatorView: UIView {
         ctx.setLineWidth(2.0)
         ctx.strokeLineSegments(between: [CGPoint(x: 0, y: rect.height), CGPoint(x: rect.width, y: rect.height)])
         ctx.strokeLineSegments(between: [CGPoint(x: rect.width, y: 0), CGPoint(x: rect.width, y: rect.height)])
+        
+        
+        
+        //Draw Title, Value:
+        if indicator.frameRow == 0 { return }
+        let titleString = getMutableAttString(text: indicator.getNameInFunctionForm(), color: UIColor.black)
+        if chart.crosshair.isEnabled {
+            let candleIndex = chart.crosshair.currentCandleIndex
+            let candle: Candle
+            if candleIndex < visibleCandles.count && candleIndex >= 0 {
+                candle = chart.visibleCandles[candleIndex]
+            } else {
+                candle = chart.candles.last!
+            }
+            switch indicator.indicatorType {
+            case .volume:
+                let color = properties[Indicator.PropertyKey.color_1] as! UIColor
+                let smaColor = properties[Indicator.PropertyKey.color_2] as! UIColor
+                let volumeSMA = indicator.indicatorValue[candle.openTime] as! (Decimal, Decimal)
+                titleString.append(getAttString(text: "  \(symbol.priceFormatted(volumeSMA.0))", color: color))
+                titleString.append(getAttString(text: "  \(symbol.priceFormatted(volumeSMA.1))", color: smaColor))
+            case .rsi:
+                let color = properties[Indicator.PropertyKey.color_1] as! UIColor
+                let rsi: Decimal = indicator.indicatorValue[candle.openTime] as! Decimal
+                titleString.append(getAttString(text: "  \(rsi.formattedWith(fractionDigitCount: 2))", color: color))
+            case .macd:
+                let lineColor = properties[Indicator.PropertyKey.color_1] as! UIColor
+                let signalColor = properties[Indicator.PropertyKey.color_2] as! UIColor
+                let macd = indicator.indicatorValue[candle.openTime] as! (Decimal, Decimal)
+                titleString.append(getAttString(text: "  \t\(macd.0.formattedWith(fractionDigitCount: 2))", color: lineColor))
+                titleString.append(getAttString(text: "  \(macd.1.formattedWith(fractionDigitCount: 2))", color: signalColor))
+                let diffPositiveColor = properties[Indicator.PropertyKey.color_3] as! UIColor
+                let diffNegativeColor = properties[Indicator.PropertyKey.color_4] as! UIColor
+                let diffColor = (macd.0 - macd.1) >= 0 ? diffPositiveColor : diffNegativeColor
+                titleString.append(getAttString(text: "  \((macd.0 - macd.1).formattedWith(fractionDigitCount: 2))", color: diffColor))
+            default:
+                break
+            }
+        }
+        let stringSize = titleString.size()
+        let stringRect = CGRect(x: 5, y: 5, width: stringSize.width, height: stringSize.height)
+        titleString.draw(in: stringRect)
         
     }
     
@@ -250,13 +295,26 @@ class IndicatorView: UIView {
         if length > chart.candles.count { return }
         if visibleCandles.isEmpty { return }
         
+        var highestRSI: Decimal = 70
+        var lowestRSI: Decimal = 30
+        for candle in visibleCandles {
+            let rsi = indicator.indicatorValue[candle.openTime] as! Decimal
+            if rsi > highestRSI {
+                highestRSI = rsi
+            } else if rsi < lowestRSI {
+                lowestRSI = rsi
+            }
+        }
+        let diff = highestRSI - lowestRSI
+        valueView.update(newhighestValue: highestRSI + 0.1 * diff, newLowestValue: lowestRSI - 0.1 * diff)
+        
         var points = [CGPoint]()
         for i in 0..<visibleCandles.count {
             let candle = visibleCandles[i]
             let candleIndex =  i + chart.firstVisibleCandleIndex
             if candleIndex < length { continue }
             let rsi = indicator.indicatorValue[candle.openTime] as! Decimal
-            let point = CGPoint(x: candle.x, y: Util.y(price: rsi, frameHeight: frame.height, highestPrice: 100, lowestPrice: 0))
+            let point = CGPoint(x: candle.x, y: Util.y(price: rsi, frameHeight: frame.height, highestPrice: valueView.highestValue, lowestPrice: valueView.lowestValue))
             points.append(point)
         }
         if points.isEmpty { return }
@@ -475,7 +533,29 @@ class IndicatorView: UIView {
     
     
     
+    private func getAttString(text: String, color: UIColor) -> NSAttributedString {
+        let attributes = [
+            NSAttributedString.Key.font: UIFont.systemFont(ofSize: 11.0),
+            NSAttributedString.Key.foregroundColor: color
+        ]
+        
+        let string = NSAttributedString(string: text, attributes: attributes)
+        return string
+    }
     
+    private func getMutableAttString(text: String, color: UIColor) -> NSMutableAttributedString {
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.alignment = .left
+        
+        let attributes: [NSAttributedString.Key: Any] = [
+            .paragraphStyle: paragraphStyle,
+            .font: UIFont.systemFont(ofSize: 11.0),
+            .foregroundColor: color,
+        ]
+        
+        let string = NSMutableAttributedString(string: text, attributes: attributes)
+        return string
+    }
     
     
     

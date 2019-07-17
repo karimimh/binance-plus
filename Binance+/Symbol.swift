@@ -196,10 +196,6 @@ class Symbol: NSObject, NSCoding {
         self.init(name: name, status: status, baseAsset: baseAsset, baseAssetPrecision: baseAssetPrecision, quoteAsset: quoteAsset, quoteAssetPrecision: quoteAssetPrecision, price: price, volume: volume, quoteAssetVolume: quoteAssetVolume, percentChange: percentChange, tickSize: tickSize, stepSize: stepSize, minQuantity: minQuantity, minPrice: minPrice)
     }
     
-    func priceTruncatedInTickSize(_ p: Decimal) -> Decimal {
-        let n = Int((p / tickSize).doubleValue)
-        return Decimal(n) * tickSize
-    }
     
     
     func btcVolume(_ app: App!) -> Decimal {

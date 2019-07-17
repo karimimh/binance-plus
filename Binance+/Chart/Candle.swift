@@ -164,6 +164,10 @@ class Candle: Equatable, NSCoding {
         }
     }
     
+    func getColor(_ app: App) -> UIColor {
+        return isGreen() ? app.bullCandleColor : app.bearCandleColor
+    }
+    
     struct Key {
         static let symbol = "candle.symbol"
         static let timeframe = "candle.timeframe"

@@ -74,7 +74,6 @@ class ChartVC: UIViewController {
     var coverView: UIView!
     var panBeganRightContainerX: CGFloat = 0
     
-    var candleBadStreamCount = 0
     var currentKLineIsClosed = false
     
     // MARK: - Initialization
@@ -153,16 +152,11 @@ class ChartVC: UIViewController {
         candleWebSocket = nil
         priceLineTimer?.invalidate()
         priceLineTimer = nil
-        self.candleBadStreamCount = 0
 
         
         if self.chart != nil {
             self.chart.alpha = 0.25
-            
         }
-//        for sv in chartView.subviews {
-//            sv.removeFromSuperview()
-//        }
         chartView.setNeedsLayout()
         
         
@@ -219,17 +213,24 @@ class ChartVC: UIViewController {
             let latestCandleOpen = self.candles.last!.openTime.utcToLocal().toMillis()
             let nextCandleOpen = self.candles.last!.nextCandleOpenTime().utcToLocal().toMillis()
             
-            if symbolName != self.symbol || interval != self.timeframe.rawValue ||
-                (latestCandleOpen != openTime && nextCandleOpen != openTime) || (nextCandleOpen == openTime && !self.currentKLineIsClosed){
-                self.candleBadStreamCount += 1
-                if self.candleBadStreamCount <= 2 {
-                    return
-                }
+            if symbolName != self.symbol || interval != self.timeframe.rawValue {
+                return
+            }
+            
+            if openTime > nextCandleOpen {
                 DispatchQueue.main.async {
                     self.reloadChart()
                 }
                 return
             }
+            
+            if openTime == nextCandleOpen && !self.currentKLineIsClosed {
+                DispatchQueue.main.async {
+                    self.reloadChart()
+                }
+                return
+            }
+            
             self.currentKLineIsClosed = isThisKLineClosed
             let candle = Candle(symbol: self.app.getSymbol(symbolName)!, timeframe: Timeframe(rawValue: interval)!, open: open, high: high, low: low, close: close, volume: baseAssetVolume, openTime: Date(timeIntervalSince1970: TimeInterval(openTime) / 1000), closeTime: Date(timeIntervalSince1970: TimeInterval(closeTime) / 1000), quoteAssetVolume: quoteAssetVolume, numberOfTrades: numberOfTrades, takerBuyBaseAssetVolume: 0, takerBuyQuoteAssetVolume: 0)
             
@@ -242,7 +243,7 @@ class ChartVC: UIViewController {
                 DispatchQueue.main.async {
                     self.chart.update()
                 }
-            } else {
+            } else if openTime == latestCandleOpen {
                 self.candles[self.candles.count - 1].closeTime =  Date(timeIntervalSince1970: TimeInterval(closeTime) / 1000)
                 self.candles[self.candles.count - 1].open = open
                 self.candles[self.candles.count - 1].close = close
@@ -257,6 +258,10 @@ class ChartVC: UIViewController {
                 }
                 DispatchQueue.main.async {
                     self.chart.update()
+                }
+            } else {
+                DispatchQueue.main.async {
+                    self.reloadChart()
                 }
             }
             
@@ -322,14 +327,6 @@ class ChartVC: UIViewController {
     @IBAction func timeframeBBIClicked(_ sender: UIBarButtonItem) {
         var options: [String] = Timeframe.allValues()
         parentVC.slideUpOptionsChooser(options: options, title: "Select Timeframe") { (index) in
-//            self.priceLineTimer?.invalidate()
-//            self.priceLineTimer = nil
-//            self.candleWebSocket?.close()
-//            self.candleWebSocket = nil
-//
-//            self.chart.removeFromSuperview()
-//            self.chart = nil
-//            self.chartView.setNeedsLayout()
             self.app.chartTimeframe = Timeframe(rawValue: options[index])!
             DispatchQueue.main.async {
                 self.reloadChart()
