@@ -43,6 +43,8 @@ class PriceLineView: UIView {
         
         let color = (chart.visibleCandles.last!.isGreen() ? chart.app.bullCandleColor : chart.app.bearCandleColor)
         ctx.setLineWidth(0.25)
+        ctx.setLineCap(.round)
+        ctx.setLineDash(phase: 0, lengths: [0.5, 0.8])
         ctx.setStrokeColor(color.withAlphaComponent(0.75).cgColor)
         
         path.stroke()

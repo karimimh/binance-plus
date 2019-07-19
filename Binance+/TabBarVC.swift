@@ -24,6 +24,7 @@ class TabBarVC: UITabBarController {
     
     
     override func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
+        (UIApplication.shared.delegate as? AppDelegate)?.currentTabTag = item.tag
         if item.tag == 101 {
             parentVC.slideRightPanGR.isEnabled = true
         } else {

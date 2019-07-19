@@ -192,9 +192,12 @@ class BinanaceApi {
     
     
     
-    static func allMarketMiniTickersStream(completion: @escaping ([[String: Any]]?) -> Void) {
+    static func allMarketMiniTickersStream(completion: @escaping (WebSocket?, [[String: Any]]?) -> Void) {
         let url = "wss://stream.binance.com:9443/ws/!miniTicker@arr"
         let webSocket = WebSocket(url)
+        DispatchQueue.main.async {
+            (UIApplication.shared.delegate as? AppDelegate)?.miniTickerWebSocket = webSocket
+        }
         webSocket.event.message = { msg in
             guard let message = msg as? String  else {
                 return
@@ -202,19 +205,20 @@ class BinanaceApi {
             
             do {
                 if let json = try JSONSerialization.jsonObject(with: message.data(using: .utf8)!, options: []) as? [[String: Any]] {
-                    completion(json)
+                    completion(webSocket, json)
                 } else {
-                    completion(nil)
+                    completion(webSocket, nil)
                 }
             } catch {
-                completion(nil)
+                completion(webSocket, nil)
             }
         }
-        webSocket.event.open = {
-            if let delegate = UIApplication.shared.delegate as? AppDelegate {
-                delegate.webSocket = webSocket
-            }
-        }
+//        webSocket.event.open = {
+//            print("MiniTicker Open")
+//        }
+//        webSocket.event.close = { (i, s, b) in
+//            print("MiniTicker Close")
+//        }
     }
     
     
@@ -328,6 +332,9 @@ class BinanaceApi {
     static func candlestickStream(symbolName: String, timeframe: Timeframe, completion: @escaping (WebSocket?, [String: Any]?) -> Void) {
         let url = "wss://stream.binance.com:9443/ws/\(symbolName.lowercased())@kline_\(timeframe.rawValue)"
         let webSocket = WebSocket(url)
+        DispatchQueue.main.async {
+            (UIApplication.shared.delegate as? AppDelegate)?.candlestickWebSocket = webSocket
+        }
         webSocket.event.message = { msg in
             guard let message = msg as? String  else {
                 return
@@ -343,6 +350,12 @@ class BinanaceApi {
                 completion(webSocket, nil)
             }
         }
+//        webSocket.event.open = {
+//            print("Candlestick Open")
+//        }
+//        webSocket.event.close = { (i, s, b) in
+//            print("Candlestick Close")
+//        }
     }
     
 }

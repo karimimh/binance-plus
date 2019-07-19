@@ -13,7 +13,6 @@ import WebKit
 
 class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdating {
     
-    private var actionPool = [() -> Void]()
     //MARK: Properties
     var parentVC: ParentVC!
     var tabBarVC: TabBarVC!
@@ -48,6 +47,8 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
     var downloadingPreviewCandles = false
     
     var timer: Timer!
+    
+    var miniTickerWebSocket: WebSocket?
     
     // MARK: - Initialization
     override func viewDidLoad() {
@@ -114,6 +115,7 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         if timer != nil {
             timer.invalidate()
         }
+        miniTickerWebSocket?.close()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -121,6 +123,7 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         if timer != nil {
             timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(reloadTableView), userInfo: nil, repeats: true)
         }
+        miniTickerWebSocket?.open()
     }
     
     override func didReceiveMemoryWarning() {
@@ -131,7 +134,7 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
     }
     
     @IBAction func reloadTableView() {
-        if !isEditing && !isFiltering() && parentVC.mainContainerLeadingConstraint.constant == 0 && parentVC.bottomContainerTopConstraint.constant == 0 && !isScrolling {
+        if !isEditing && !isFiltering() && !isScrolling {
             tableView.reloadData()
             
             guard !downloadingPreviewCandles else { return }
@@ -390,21 +393,17 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
     //MARK: - Sort Options
     
     @IBAction func showSortOptionsVC() {
-        parentVC.setAsBottomContainerVC(sortOptionsVC)
-        var tableHeight = sortOptionsVC.optionsTableView.tableFooterView!.frame.minY
-        if tableHeight > UIScreen.main.bounds.height * 0.65 {
-            tableHeight = UIScreen.main.bounds.height * 0.65
-        }
-        let h = tableHeight + sortOptionsVC.optionsTableView.frame.minY
-        sortOptionsVC.tableViewBottomConstraint.constant = parentVC.bottomContainer.bounds.height - h
         
-        parentVC.slideUp(height: tableHeight + sortOptionsVC.optionsTableView.frame.minY) { (panGR2, panGR3) in
-            self.app.sortDirection.negate()
-            self.sortOptionsVC.optionsTableView.selectRow(at: IndexPath(row: self.app.sortBy.rawValue, section: 0), animated: false, scrollPosition: .none)
-            self.sortOptionsVC.handleView.addGestureRecognizer(panGR2)
-            self.sortOptionsVC.navBar.addGestureRecognizer(panGR3)
+        parentVC.slideUpOptionsChooser(options: SortBy.all(), title: "Sort By", shouldDismissOnSelection: false) { (index) in
+            let sortBy = SortBy(rawValue: index)!
+            if self.app.sortBy == sortBy {
+                self.app.sortDirection.negate()
+            } else {
+                self.app.sortBy = sortBy
+                self.app.sortDirection = .ASCENDING
+            }
+            self.needsSorting()
         }
-        
         
     }
     
@@ -729,7 +728,8 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
     //MARK: Price Ticker Streaming
     
     private func startPriceStreaming() {
-        BinanaceApi.allMarketMiniTickersStream { (jsonArray) in
+        BinanaceApi.allMarketMiniTickersStream { (ws, jsonArray) in
+            self.miniTickerWebSocket = ws
             guard let array = jsonArray else { return }
             for json in array {
                 let symbolName = json["s"] as! String

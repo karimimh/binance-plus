@@ -109,9 +109,9 @@ class ValueView: UIView {
     // MARK: - Private Methods
     
     private func calculateTicks() {
-        if tickPrices.count * 2 <= numberOfTicks || tickPrices.count > Int(maxNumberOfTicks) + 2 {
+//        if tickPrices.count * 2 <= numberOfTicks || tickPrices.count > Int(maxNumberOfTicks) + 2 {
             calculateTickGap()
-        }
+//        }
         tickStrings.removeAll()
         tickPrices.removeAll()
         var width: CGFloat = 0

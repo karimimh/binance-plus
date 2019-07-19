@@ -57,7 +57,7 @@ class IndicatorView: UIView {
         case .rsi:
             valueView = ValueView(chart: chart, tickSize: -1.0, highestValue: 100, lowestValue: 0, requiredTickPrices: [30, 70], precision: 2)
         case .macd:
-            valueView = ValueView(chart: chart, tickSize: -1.0, highestValue: 100, lowestValue: 0, requiredTickPrices: [0], precision: chart.symbol.tickSize.significantFractionalDecimalDigits)
+            valueView = ValueView(chart: chart, tickSize: chart.symbol.tickSize, highestValue: 100, lowestValue: 0, requiredTickPrices: [0], precision: chart.symbol.tickSize.significantFractionalDecimalDigits)
         }
         
         super.init(frame: .zero)

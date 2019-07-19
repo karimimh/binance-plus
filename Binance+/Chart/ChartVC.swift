@@ -138,8 +138,8 @@ class ChartVC: UIViewController {
         }
     }
     
-    override func viewDidDisappear(_ animated: Bool) {
-        super.viewDidDisappear(animated)
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
         candleWebSocket?.close()
         priceLineTimer?.invalidate()
     }
@@ -192,6 +192,7 @@ class ChartVC: UIViewController {
             guard self.chart != nil else { optionalWS?.close(); return }
             guard self.chart.isInitializationComplete else { optionalWS?.close(); return }
             self.candleWebSocket = optionalWS
+            
             
             let symbolName = json["s"] as! String
             let kline = json["k"] as! [String: Any]

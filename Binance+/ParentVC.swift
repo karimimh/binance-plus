@@ -12,49 +12,40 @@ class ParentVC: UIViewController, UIGestureRecognizerDelegate {
     @IBOutlet weak var dimView: UIView!
     @IBOutlet weak var mainContainer: UIView!
     @IBOutlet weak var leftContainer: UIView!
-    @IBOutlet weak var bottomContainer: UIView!
-    @IBOutlet weak var rightContainer: UIView!
     @IBOutlet weak var mainContainerLeadingConstraint: NSLayoutConstraint!
-    @IBOutlet weak var bottomContainerTopConstraint: NSLayoutConstraint!
     @IBOutlet weak var leftContainerTrailingConstraint: NSLayoutConstraint!
-    @IBOutlet weak var rightContainerLeadingConstraint: NSLayoutConstraint!
     @IBOutlet weak var leftContainerWidthConstraint: NSLayoutConstraint!
+    
+    var transition = SlideUpAnimator(duration: 0.2)
     
     var mainContainerVC: UIViewController!
     var leftContainerVC: UIViewController!
     var bottomContainerVC: UIViewController!
-    var rightContainerVC: UIViewController!
     
-    var bottomContainerBestHeight: CGFloat = 0
     var leftContainerBestWidth: CGFloat {
         get {
             return leftContainerWidthConstraint.multiplier * UIScreen.main.bounds.width
         }
     }
-    var rightContainerBestWidth: CGFloat = UIScreen.main.bounds.width * 0.25
     
     var app: App!
 
 
-    var slideUpPanGR: UIPanGestureRecognizer!
-    var slideUpTapGR: UITapGestureRecognizer!
-    
     
     var slideRightPanGR: UIPanGestureRecognizer!
     var slideRightPanGR2: UIPanGestureRecognizer!
     var slideRightTapGR: UITapGestureRecognizer!
     var panBeganLeftContainerX: CGFloat = -UIScreen.main.bounds.width * 0.75
     
-    var slideLeftPanGR: UIPanGestureRecognizer!
-    var slideLeftTapGR: UITapGestureRecognizer!
-    var panBeganRightContainerX: CGFloat = UIScreen.main.bounds.width
     
     
     var slidingDisabled: Bool = false
     
     
-    
-    
+    var optionsChooserTitle = "Select Option"
+    var optionsChooserOptions = [String]()
+    var optionsChooserCompletion: ((Int) -> Void)?
+    var optionsChooserShouldDismissOnSelection = true
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -65,148 +56,18 @@ class ParentVC: UIViewController, UIGestureRecognizerDelegate {
                 break
             }
         }
-        bottomContainer.layer.borderWidth = 0.5
-        bottomContainer.layer.borderColor = UIColor.blue.cgColor
-        bottomContainer.layer.cornerRadius = 14
-        bottomContainer.layer.masksToBounds = true
     }
     
 
     //MARK: - SlideUp Chooser List
     
-    func slideUpOptionsChooser(options: [String], title: String? = nil, completion: @escaping ((Int) -> Void)) {
-        let vc = self.storyboard?.instantiateViewController(withIdentifier: "OptionsChooserVC") as! OptionsChooserVC
-        vc.options = options
-        vc.parentVC = self
-        vc.completion = completion
-        setAsBottomContainerVC(vc)
-        var tableHeight = vc.tableView.tableFooterView!.frame.minY
-        if tableHeight > UIScreen.main.bounds.height * 0.65 {
-            tableHeight = UIScreen.main.bounds.height * 0.65
-        }
-        let h = tableHeight + vc.tableView.frame.minY
-        vc.tableViewBottomConstraint.constant = bottomContainer.bounds.height - h
-        
-        if let t = title {
-            vc.navItem.title = t
-        }
-        
-        slideUp(height: tableHeight + vc.tableView.frame.minY) { (panGR2, panGR3) in
-            vc.handleView.addGestureRecognizer(panGR2)
-            vc.navBar.addGestureRecognizer(panGR3)
-        }
+    func slideUpOptionsChooser(options: [String], title: String? = nil, shouldDismissOnSelection: Bool = true, completion: @escaping ((Int) -> Void)) {
+        optionsChooserTitle = title ?? "SelectOption"
+        optionsChooserShouldDismissOnSelection = shouldDismissOnSelection
+        optionsChooserOptions = options
+        optionsChooserCompletion = completion
+        performSegue(withIdentifier: "ShowOptionsSegue", sender: self)
     }
-    
-    
-    
-    
-    // MARK: - SlideUp VC
-    
-    func setAsBottomContainerVC(_ vc: UIViewController) {
-        bottomContainerVC = vc
-        
-        addChild(bottomContainerVC)
-        bottomContainer.addSubview(bottomContainerVC.view)
-        bottomContainerVC.didMove(toParent: self)
-    }
-    
-    func slideUp(height: CGFloat, completion: @escaping (UIPanGestureRecognizer, UIPanGestureRecognizer) -> Void = {(_, _) in }) {
-        app.busyShowingSTH = true
-        mainContainerVC.view.isUserInteractionEnabled = false
-        
-        bottomContainerBestHeight = height
-        bottomContainerTopConstraint.constant = -height
-        
-        UIView.animate(withDuration: 0.15, delay: 0, options: .curveEaseIn, animations: {
-            let alpha = height / UIScreen.main.bounds.height
-            self.dimView.backgroundColor = UIColor.clear.withAlphaComponent(alpha)
-            self.view.layoutIfNeeded()
-        }) { (b) in
-            if self.slideUpTapGR == nil {
-                self.slideUpTapGR = UITapGestureRecognizer(target: self, action: #selector(self.handleTap(_:)))
-                self.mainContainer.addGestureRecognizer(self.slideUpTapGR)
-            }
-            if self.slideUpPanGR == nil {
-                self.slideUpPanGR = UIPanGestureRecognizer(target: self, action: #selector(self.handlePan(_:)))
-                self.mainContainer.addGestureRecognizer(self.slideUpPanGR)
-            }
-            self.slideUpTapGR.isEnabled = true
-            self.slideUpPanGR.isEnabled = true
-            
-            let panGR2 = UIPanGestureRecognizer(target: self, action: #selector(self.handlePan(_:)))
-            let panGR3 = UIPanGestureRecognizer(target: self, action: #selector(self.handlePan(_:)))
-            completion(panGR2, panGR3)
-            
-        }
-    }
-    
-    func slideDown(completion: @escaping () -> Void = {}) {
-        slideUpPanGR.isEnabled = false
-        slideUpTapGR.isEnabled = false
-        app.busyShowingSTH = false
-        
-        bottomContainerTopConstraint.constant = 0
-        UIView.animate(withDuration: 0.15, delay: 0, options: .curveEaseOut, animations: {
-            self.view.layoutIfNeeded()
-            self.dimView.backgroundColor = UIColor.clear
-        }) { (b) in
-            self.mainContainerVC.view.isUserInteractionEnabled = true
-            self.bottomContainerVC.removeFromParent()
-            
-            completion()
-        }
-
-    }
-    
-    @IBAction func handleTap(_ sender: UITapGestureRecognizer) {
-        slideDown()
-    }
-    
-    
-    @IBAction func handlePan(_ recognizer: UIPanGestureRecognizer) {
-        let dy = recognizer.translation(in: self.view).y
-        switch recognizer.state {
-        case .began:
-            break
-        case .changed:
-            moveContainerView(to: bottomContainerBestHeight - dy)
-        case .ended:
-            if dy > bottomContainerBestHeight / 2 {
-                slideDown()
-            } else {
-                slideBackUp()
-            }
-        case .failed, .cancelled:
-            slideDown()
-        default:
-            break
-        }
-    }
-    
-    private func moveContainerView(to y: CGFloat) {
-        self.bottomContainerTopConstraint.constant = -y
-        let alpha = y / UIScreen.main.bounds.height
-        self.dimView.backgroundColor = UIColor.clear.withAlphaComponent(alpha)
-        self.view.layoutIfNeeded()
-    }
-    
-    private func slideBackUp() {
-        app.busyShowingSTH = true
-        self.bottomContainerTopConstraint.constant = -self.bottomContainerBestHeight
-        UIView.animate(withDuration: 0.15, delay: 0, options: .transitionCurlUp, animations: {
-            let alpha = self.bottomContainerBestHeight / UIScreen.main.bounds.height
-            self.dimView.backgroundColor = UIColor.clear.withAlphaComponent(alpha)
-            self.view.layoutIfNeeded()
-        }) { (_) in
-            self.slideUpTapGR.isEnabled = true
-            self.slideUpPanGR.isEnabled = true
-        }
-    }
-    
-    
-    
-    
-    
     
     
     
@@ -334,16 +195,45 @@ class ParentVC: UIViewController, UIGestureRecognizerDelegate {
     }
     
     
-
-    
+    //MARK: - Segue
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         switch segue.destination {
         case let chooseListVC as ChooseListVC:
             self.leftContainerVC = chooseListVC
+        case let vc as OptionsChooserVC:
+            bottomContainerVC = vc
+            vc.title = optionsChooserTitle
+            vc.shouldDismissOnSelect = optionsChooserShouldDismissOnSelection
+            vc.options = optionsChooserOptions
+            vc.completion = optionsChooserCompletion
+            vc.transitioningDelegate = self
         default:
             break
         }
     }
     
+}
+
+
+
+
+
+extension ParentVC: UIViewControllerTransitioningDelegate {
+    func animationController(forPresented presented: UIViewController, presenting: UIViewController, source: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+        transition = SlideUpAnimator(duration: 0.2)
+        
+        switch bottomContainerVC {
+        case _ as OptionsChooserVC:
+            var h = CGFloat(88 + 44 * optionsChooserOptions.count)
+            if h > UIScreen.main.bounds.height * 0.65 { h = UIScreen.main.bounds.height * 0.65 }
+            transition.height = h
+        default:
+            break
+        }
+        return transition
+    }
     
+    func animationController(forDismissed dismissed: UIViewController) -> UIViewControllerAnimatedTransitioning? {
+        return transition
+    }
 }

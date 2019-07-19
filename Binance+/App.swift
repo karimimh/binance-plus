@@ -343,6 +343,10 @@ enum SortBy: Int {
     case VOLUME
     case PRICE
     case PERCENT_CHANGE
+    
+    static func all() -> [String] {
+        return ["Defaul", "Symbol", "Volume", "Price", "% Change"]
+    }
 }
 
 enum SortDirection: Int {

@@ -836,7 +836,7 @@ class Chart: UIView {
     
     
     @IBAction func handleCandleTimer() {
-        priceLineView.update()
+        update()
     }
     
     

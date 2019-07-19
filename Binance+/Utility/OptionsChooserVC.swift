@@ -22,18 +22,30 @@ class OptionsChooserVC: UIViewController, UITableViewDelegate, UITableViewDataSo
     
     var completion: ((Int) -> Void)?
     
+    var shouldDismissOnSelect = true
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        tableView.tableFooterView = UIView()
-        
         tableView.delegate = self
         tableView.dataSource = self
-        
         tableView.allowsSelection = true
         
+        navBar.shadowImage = UIColor.lightGray.withAlphaComponent(0.7).as1ptImage()
+        navBar.setBackgroundImage(UIColor.white.as1ptImage(), for: .default)
+        
+        
         navItem = UINavigationItem(title: "")
+        navItem.leftBarButtonItem = UIBarButtonItem(title: title, style: .plain, target: nil, action: nil)
+        navItem.leftBarButtonItem?.tintColor = UIColor.purple
+        navItem.leftBarButtonItem?.setTitleTextAttributes([NSAttributedString.Key.font: UIFont.systemFont(ofSize: 20, weight: .bold), NSAttributedString.Key.foregroundColor: UIColor.purple], for: .normal)
+        navItem.leftBarButtonItem?.setTitlePositionAdjustment(UIOffset(horizontal: -7.5, vertical: -10), for: .default)
         navBar.items = [navItem]
+        
+        
+        handleView.clipsToBounds = false
+        handleView.layer.masksToBounds = false
+
     }
 
     
@@ -55,8 +67,12 @@ class OptionsChooserVC: UIViewController, UITableViewDelegate, UITableViewDataSo
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        parentVC.slideDown {
-            self.completion!(indexPath.row)
+        if shouldDismissOnSelect {
+            self.dismiss(animated: true) {
+                self.completion?(indexPath.row)
+            }
+        } else {
+            completion?(indexPath.row)
         }
     }
     
@@ -67,5 +83,21 @@ class OptionsChooserVC: UIViewController, UITableViewDelegate, UITableViewDataSo
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 44
+    }
+    
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return 1
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 1
+    }
+    
+    func tableView(_ tableView: UITableView, estimatedHeightForFooterInSection section: Int) -> CGFloat {
+        return 1
+    }
+    
+    func tableView(_ tableView: UITableView, estimatedHeightForHeaderInSection section: Int) -> CGFloat {
+        return 1
     }
 }
