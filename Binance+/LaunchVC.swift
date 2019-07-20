@@ -20,30 +20,22 @@ class LaunchVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        imageView.image = Util.createGradientImage(color1: UIColor.fromHex(hex: "#16BEFF"), color2: UIColor.fromHex(hex: "#16BEFF"), width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-        
         connect {
             if let savedApp = self.loadApp() {
                 self.app = savedApp
-                self.presentTheViewController()
             } else {
                 self.app = App()
-                self.app.appFirstTimeLaunch = true
-                self.getExchageInfo {
-                    self.createLists {
-                        self.downloadSymbolsAll24HPriceChangeStatistics {
-                            self.loadSymbolIcons {
-                                self.app.save()
-                                self.presentTheViewController { }
-                            }
-                        }
+            }
+            
+            self.getExchageInfo {
+                self.createLists {
+                    self.downloadSymbolsAll24HPriceChangeStatistics {
+                        self.app.save()
+                        self.presentTheViewController()
                     }
                 }
             }
         }
-        
-
-        
     }
     
     //MARK: - Private Methods
@@ -107,26 +99,44 @@ class LaunchVC: UIViewController {
     
     
     private func createLists(completion: @escaping () -> Void) {
+        let serverLists = ["BTC", "ETH", "BNB", "USD", "ALTS"]
         
-        let predefinedLists = ["BTC", "ETH", "BNB", "PAX", "XRP"]
-        
-        for symbol in app.allBinanceSymbols {
-            let quoteAsset = symbol.quoteAsset
-            if let list = self.app.getList(with: quoteAsset) {
-                list.symbols.append(symbol.name)
-            } else {
-                let newList = List(name: quoteAsset, isServerList: true)
-                newList.isServerList = true
-                newList.symbols.append(symbol.name)
-                app.lists.append(newList)
+        for n in serverLists {
+            if app.getList(with: n) == nil {
+                let list = List(name: n, isServerList: true)
+                app.lists.append(list)
             }
         }
         
-        for i in 0 ..< predefinedLists.count {
-            let listName = predefinedLists[i]
-            let index = app.getListIndex(with: listName)
-            app.lists.swapAt(index, i)
+        for list in app.lists {
+            if list.isServerList {
+                list.symbols.removeAll()
+            }
         }
+        
+        for symbol in app.allBinanceSymbols {
+            let serverListName = app.getServerListName(for: symbol)
+            
+            if let serverList = app.getList(with: serverListName) {
+                serverList.symbols.append(symbol.name)
+            }
+        }
+        
+        
+        for list in app.lists {
+            if !list.isServerList {
+                var removedSymbols = [String]()
+                for symbolName in list.symbols {
+                    if app.getSymbol(symbolName) == nil {
+                        removedSymbols.append(symbolName)
+                    }
+                }
+                list.symbols.removeAll { (s) -> Bool in
+                    return removedSymbols.contains(s)
+                }
+            }
+        }
+        
         
         completion()
     }
@@ -141,7 +151,7 @@ class LaunchVC: UIViewController {
                 let quoteAssetVolume = json["quoteVolume"] as! String
                 let percentChange = json["priceChangePercent"] as! String
                 
-                guard let symbol = self.app.getSymbol(symbolName) else { return }
+                guard let symbol = self.app.getSymbol(symbolName) else { continue }
                 
                 symbol.price = Decimal(string: closePrice)!
                 symbol.volume = Decimal(string: baseAssetVolume)!

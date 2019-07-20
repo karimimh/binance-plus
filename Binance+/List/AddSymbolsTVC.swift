@@ -10,9 +10,9 @@ import UIKit
 
 class AddSymbolsTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdating {
     
-    var listTVC: ListTVC? {
+    var listVC: ListVC? {
         didSet {
-            if let vc = listTVC {
+            if let vc = listVC {
                 allSymbols = vc.app.allBinanceSymbols.sorted(by: { (lhs, rhs) -> Bool in
                     lhs.name < rhs.name
                 })
@@ -41,7 +41,7 @@ class AddSymbolsTVC: UITableViewController, UISearchBarDelegate, UISearchResults
     
     
     @IBAction func onSelectionFinished() {
-        guard let vc = listTVC else { return }
+        guard let vc = listVC else { return }
         guard let l = list else { return }
         
         
@@ -75,7 +75,7 @@ class AddSymbolsTVC: UITableViewController, UISearchBarDelegate, UISearchResults
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard let vc = listTVC else { return 0 }
+        guard let vc = listVC else { return 0 }
         if isFiltering() {
             return filteredSymbols.count
         }
@@ -84,7 +84,7 @@ class AddSymbolsTVC: UITableViewController, UISearchBarDelegate, UISearchResults
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PickSymbolTVCell", for: indexPath) as! PickSymbolTVCell
-        guard let vc = listTVC else { return cell }
+        guard let vc = listVC else { return cell }
         
         let symbols: [Symbol]
         if isFiltering() {
@@ -151,7 +151,7 @@ class AddSymbolsTVC: UITableViewController, UISearchBarDelegate, UISearchResults
     
     
     func updateSearchResults(for searchController: UISearchController) {
-        filteredSymbols = listTVC!.app.allBinanceSymbols.filter({ (symbol) -> Bool in
+        filteredSymbols = listVC!.app.allBinanceSymbols.filter({ (symbol) -> Bool in
             if searchBarIsEmpty() {
                 return true
             }

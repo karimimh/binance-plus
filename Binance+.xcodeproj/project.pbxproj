@@ -24,7 +24,6 @@
 		A5630BDE2237D171002B0152 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A5630BDD2237D171002B0152 /* Assets.xcassets */; };
 		A5630BE12237D171002B0152 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A5630BDF2237D171002B0152 /* LaunchScreen.storyboard */; };
 		A5630BE92237D27F002B0152 /* SymbolTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5630BE82237D27F002B0152 /* SymbolTableViewCell.swift */; };
-		A5630BEB2237E5F1002B0152 /* ListTVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5630BEA2237E5F1002B0152 /* ListTVC.swift */; };
 		A5630BED2237E64A002B0152 /* BinanceApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5630BEC2237E649002B0152 /* BinanceApi.swift */; };
 		A5630BEF2237F083002B0152 /* Symbol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5630BEE2237F083002B0152 /* Symbol.swift */; };
 		A5630BF12238F628002B0152 /* ChartVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5630BF02238F628002B0152 /* ChartVC.swift */; };
@@ -226,6 +225,8 @@
 		A5DD40B022DC6B480004B78C /* storm.png in Resources */ = {isa = PBXBuildFile; fileRef = A5DD400522DC6B480004B78C /* storm.png */; };
 		A5DD40B122DC6B480004B78C /* snt.png in Resources */ = {isa = PBXBuildFile; fileRef = A5DD400622DC6B480004B78C /* snt.png */; };
 		A5DD40B322DC7BBF0004B78C /* PriceLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5DD40B222DC7BBF0004B78C /* PriceLineView.swift */; };
+		A5E07F7322E24EFC0007C91C /* ListVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5E07F7222E24EFC0007C91C /* ListVC.swift */; };
+		A5E07F7522E339ED0007C91C /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = A5E07F7422E339ED0007C91C /* Icon.png */; };
 		A5F4F000226E2598002EEBD2 /* ParentVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5F4EFFF226E2598002EEBD2 /* ParentVC.swift */; };
 		A5FC7BEB227AFE93004CC6F0 /* IndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */; };
 		A5FC7BED227B0705004CC6F0 /* TimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FC7BEC227B0705004CC6F0 /* TimeView.swift */; };
@@ -261,7 +262,6 @@
 		A5630BE02237D171002B0152 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A5630BE22237D171002B0152 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A5630BE82237D27F002B0152 /* SymbolTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymbolTableViewCell.swift; sourceTree = "<group>"; };
-		A5630BEA2237E5F1002B0152 /* ListTVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListTVC.swift; sourceTree = "<group>"; };
 		A5630BEC2237E649002B0152 /* BinanceApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinanceApi.swift; sourceTree = "<group>"; };
 		A5630BEE2237F083002B0152 /* Symbol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Symbol.swift; sourceTree = "<group>"; };
 		A5630BF02238F628002B0152 /* ChartVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartVC.swift; sourceTree = "<group>"; };
@@ -463,6 +463,8 @@
 		A5DD400522DC6B480004B78C /* storm.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = storm.png; sourceTree = "<group>"; };
 		A5DD400622DC6B480004B78C /* snt.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = snt.png; sourceTree = "<group>"; };
 		A5DD40B222DC7BBF0004B78C /* PriceLineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceLineView.swift; sourceTree = "<group>"; };
+		A5E07F7222E24EFC0007C91C /* ListVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListVC.swift; sourceTree = "<group>"; };
+		A5E07F7422E339ED0007C91C /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 		A5F4EFFF226E2598002EEBD2 /* ParentVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParentVC.swift; sourceTree = "<group>"; };
 		A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorView.swift; sourceTree = "<group>"; };
 		A5FC7BEC227B0705004CC6F0 /* TimeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeView.swift; sourceTree = "<group>"; };
@@ -494,6 +496,7 @@
 		A50570372247D4700032849A /* Utility */ = {
 			isa = PBXGroup;
 			children = (
+				A5E07F7422E339ED0007C91C /* Icon.png */,
 				A5FC7BF42280A8A6004CC6F0 /* OptionsChooserVC.swift */,
 				A5630BF6223912FE002B0152 /* Util.swift */,
 				A5630BFC223A612A002B0152 /* WebSocket.swift */,
@@ -526,7 +529,7 @@
 		A55ECBD122D737A700C2288A /* List */ = {
 			isa = PBXGroup;
 			children = (
-				A5630BEA2237E5F1002B0152 /* ListTVC.swift */,
+				A5E07F7222E24EFC0007C91C /* ListVC.swift */,
 				A5BE57662268F21200E4EE09 /* SortOptionsVC.swift */,
 				A56B86D3226C713D003B153B /* ChooseListVC.swift */,
 				A5B1DCDE226F809D0084B82D /* CreateListVC.swift */,
@@ -990,6 +993,7 @@
 				A5DD408322DC6B480004B78C /* iost.png in Resources */,
 				A5DD407D22DC6B480004B78C /* pax.png in Resources */,
 				A5DD406122DC6B480004B78C /* tnb.png in Resources */,
+				A5E07F7522E339ED0007C91C /* Icon.png in Resources */,
 				A5DD403822DC6B480004B78C /* omg.png in Resources */,
 				A5DD407722DC6B480004B78C /* oax.png in Resources */,
 				A5DD408222DC6B480004B78C /* poe.png in Resources */,
@@ -1108,11 +1112,11 @@
 				A577308B2279820A00C08158 /* Chart.swift in Sources */,
 				A5DD40B322DC7BBF0004B78C /* PriceLineView.swift in Sources */,
 				A5FC7BEF228023B9004CC6F0 /* ScannerVC.swift in Sources */,
-				A5630BEB2237E5F1002B0152 /* ListTVC.swift in Sources */,
 				A56B86D4226C713D003B153B /* ChooseListVC.swift in Sources */,
 				A53A784522CE0CD0005975E8 /* FilterTFTVCell.swift in Sources */,
 				A5630BEF2237F083002B0152 /* Symbol.swift in Sources */,
 				A5F4F000226E2598002EEBD2 /* ParentVC.swift in Sources */,
+				A5E07F7322E24EFC0007C91C /* ListVC.swift in Sources */,
 				A5FC7BFB22830F3F004CC6F0 /* Indicators.swift in Sources */,
 				A5DD3F5A22DB41320004B78C /* CrosshairView.swift in Sources */,
 				A5BE57652268EAE500E4EE09 /* SortOptionTVCell.swift in Sources */,

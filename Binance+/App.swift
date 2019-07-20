@@ -333,6 +333,15 @@ class App: NSObject, NSCoding {
         }
     }
     
+    func getServerListName(for symbol: Symbol) -> String {
+        if symbol.quoteAsset == "BTC" || symbol.quoteAsset == "ETH" || symbol.quoteAsset == "BNB" {
+            return symbol.quoteAsset
+        } else if symbol.quoteAsset.contains("USD") {
+            return "USD"
+        } else {
+            return "ALTS"
+        }
+    }
     
 }
 

@@ -1,17 +1,15 @@
 //
-//  SymbolTableViewController.swift
+//  ListVC.swift
 //  Binance+
 //
-//  Created by Behnam Karimi on 12/21/1397 AP.
-//  Copyright © 1397 AP Behnam Karimi. All rights reserved.
+//  Created by Behnam Karimi on 4/28/1398 AP.
+//  Copyright © 1398 AP Behnam Karimi. All rights reserved.
 //
 
 import UIKit
-import SpriteKit
-import os.log
-import WebKit
 
-class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdating {
+class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UITableViewDataSource, UITableViewDelegate {
+    @IBOutlet weak var tableView: UITableView!
     
     //MARK: Properties
     var parentVC: ParentVC!
@@ -29,12 +27,11 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         }
     }
     var isScrolling: Bool = false
-    var filteredSymbols = [Symbol]()// for when user is searching
+    var filteredSymbols = [Symbol]() // for when user is searching
     var tableSymbols = [Symbol]()
     let searchController = UISearchController(searchResultsController: nil)
     
     
-    var sortOptionsVC: SortOptionsVC!
     var chooseListVC: ChooseListVC!
     
     var listBBI: UIBarButtonItem!
@@ -60,15 +57,13 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         self.app = parentVC.app
         
         
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        sortOptionsVC = storyboard.instantiateViewController(withIdentifier: "SortOptions") as? SortOptionsVC
-        sortOptionsVC.app = app
-        sortOptionsVC.listTVC = self
+        tableView.tableFooterView = UIView()
+        tableView.allowsSelection = true
         
         
         chooseListVC = parentVC.leftContainerVC as? ChooseListVC
         chooseListVC.app = self.app
-        chooseListVC.listTVC = self
+        chooseListVC.listVC = self
         chooseListVC.listsTableView.reloadData()
         
         
@@ -80,7 +75,7 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         
         tableView.tintColor = .yellow
         addSearchControllerToNavBar()
-
+        
         if activeList == nil {
             activeList = getList("BTC")
         } else {
@@ -94,19 +89,8 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         sortBBI = navigationItem.rightBarButtonItem
         
         
-
-        if !app.appFirstTimeLaunch {
-            updateExchageInfo {
-                self.app.save()
-                self.updateSymbolsAll24HPriceChangeStatistics {
-                    self.updateLists {
-                        self.app.save()
-                        self.startPriceStreaming()
-                    }
-                }
-            }
-        }
-
+        self.startPriceStreaming()
+        
         timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(reloadTableView), userInfo: nil, repeats: true)
         
     }
@@ -130,61 +114,26 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         super.didReceiveMemoryWarning()
         for symbol in app.allBinanceSymbols {
             symbol.iconImage = nil
+            symbol.lastesThirtyDailyCandles = nil
         }
     }
     
     @IBAction func reloadTableView() {
         if !isEditing && !isFiltering() && !isScrolling {
             tableView.reloadData()
-            
-            guard !downloadingPreviewCandles else { return }
-            guard let arr = tableView.indexPathsForVisibleRows else { return }
-            var symbolsDownloadingPreviewCandles = [Symbol]()
-            for ip in arr {
-                let symbol: Symbol
-                if isFiltering() {
-                    symbol = filteredSymbols[ip.row]
-                } else {
-                    if tableSymbols.isEmpty {
-                        self.needsSorting()
-                    }
-                    symbol = tableSymbols[ip.row]
-                }
-                if symbol.lastesThirtyDailyCandles == nil {
-                    symbolsDownloadingPreviewCandles.append(symbol)
-                }
-                if symbol.iconImage == nil {
-                    if let image = UIImage(named: symbol.baseAsset.lowercased() + ".png") {
-                        symbol.iconImage = image
-                    } else {
-                        symbol.iconImage = UIImage()
-                    }
-                }
-            }
-            if symbolsDownloadingPreviewCandles.isEmpty { return }
-            self.downloadingPreviewCandles = true
-            BinanaceApi.getCandlesForSymbols(symbolsDownloadingPreviewCandles, timeframe: .daily, limit: 30) { (dictionary) in
-                for item in dictionary {
-                    let symbolName = item.key
-                    if let symbol = self.app.getSymbol(symbolName) {
-                        symbol.lastesThirtyDailyCandles = item.value
-                    }
-                }
-                self.downloadingPreviewCandles = false
-            }
         }
     }
     
     // MARK: - Table view data source
     
-    override func numberOfSections(in tableView: UITableView) -> Int {
+     func numberOfSections(in tableView: UITableView) -> Int {
         if app == nil {
             return 0
         }
         return 1
     }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    
+     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if app == nil {
             return 0
         }
@@ -197,9 +146,9 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         }
         return 0
     }
-
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    
+     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Symbol", for: indexPath) as! SymbolTableViewCell
         let symbol: Symbol
         if isFiltering() {
@@ -235,27 +184,49 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         }
         cell.changeLabel.layer.masksToBounds = true
         cell.changeLabel.layer.cornerRadius = 5
-
+        
         cell.quickChart.app = self.app
         cell.quickChart.symbol = symbol
         cell.quickChart.timeframe = .daily
         cell.quickChart.setNeedsDisplay()
         
-        cell.iconImageView.image = symbol.iconImage
+        if symbol.lastesThirtyDailyCandles == nil {
+            DispatchQueue.global(qos: .background).async {
+                BinanaceApi.getCandles(symbol: symbol, timeframe: .daily, limit: 30, completion: { (optionalCandles) in
+                    if let candles = optionalCandles {
+                        symbol.lastesThirtyDailyCandles = candles
+                        DispatchQueue.main.async {
+                            cell.quickChart.setNeedsDisplay()
+                        }
+                    }
+                })
+            }
+        }
+        
+        if symbol.iconImage != nil {
+            cell.iconImageView.image = symbol.iconImage
+        } else {
+            DispatchQueue.global(qos: .background).async {
+                symbol.iconImage = UIImage(named: symbol.baseAsset.lowercased())
+                DispatchQueue.main.async {
+                    cell.iconImageView.image = symbol.iconImage
+                }
+            }
+        }
         return cell
     }
     
-    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 80
     }
     
-    override func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
         return 80
     }
     
     
     
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let cell  = tableView.cellForRow(at: indexPath) as! SymbolTableViewCell
         guard let symbol = getSymbol(cell.nameLabel.text!) else { return }
         if !isEditing {
@@ -271,7 +242,7 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         }
     }
     
-    override func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
         let cell  = tableView.cellForRow(at: indexPath) as! SymbolTableViewCell
         guard let symbol = getSymbol(cell.nameLabel.text!) else { return }
         if selectedSymbols.contains(symbol.name) {
@@ -280,15 +251,15 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
     }
     
     
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         if activeList.isServerList {
             return false
         }
         return true
     }
     
-
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+    
+     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             activeList.symbols.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .left)
@@ -297,7 +268,7 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
     }
     
     
-    override func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+     func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
         return .none
     }
     
@@ -330,47 +301,47 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
             navigationController?.setToolbarHidden(true, animated: true)
         }
         super.setEditing(editing, animated: animated)
-
+        
         
     }
-
+    
     
     // MARK: - Reaarange TableView
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
+     func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
         let s = activeList.symbols.remove(at: fromIndexPath.row)
         activeList.symbols.insert(s, at: to.row)
         needsSorting()
         app.save()
     }
-
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+    
+     func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
         if activeList.isServerList {
             return false
         }
         return true
     }
- 
     
     
-
+    
+    
     // MARK: - Scrolling
-    override func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        isScrolling = true
-    }
-
-    override func scrollViewDidScroll(_ scrollView: UIScrollView) {
+     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         isScrolling = true
     }
     
-    override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        isScrolling = true
+    }
+    
+     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         isScrolling = false
     }
-    override func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         if !decelerate {
             isScrolling = false
         }
     }
-    override func scrollViewDidScrollToTop(_ scrollView: UIScrollView) {
+     func scrollViewDidScrollToTop(_ scrollView: UIScrollView) {
         isScrolling = false
     }
     
@@ -381,7 +352,7 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
     @IBAction func insertSymbols() {
         let navCont = self.storyboard!.instantiateViewController(withIdentifier: "AddSymbolsNavController") as! UINavigationController
         guard let symbolChooserVC = navCont.viewControllers.first as? AddSymbolsTVC else { return }
-        symbolChooserVC.listTVC = self
+        symbolChooserVC.listVC = self
         symbolChooserVC.list = activeList
         
         self.present(navCont, animated:true, completion: nil)
@@ -409,7 +380,7 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
     
     
     
-
+    
     // MARK: - Choose List
     
     @IBAction func chooseList(_ sender: UIBarButtonItem) {
@@ -473,7 +444,7 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
     //MARK: - Private Methods
     
     //MARK: Navigation Bar
-
+    
     private func addSearchControllerToNavBar() {
         searchController.searchResultsUpdater = self
         searchController.obscuresBackgroundDuringPresentation = false
@@ -481,9 +452,6 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
         navigationItem.searchController = searchController
         definesPresentationContext = true
         searchController.searchBar.delegate = self
-//        self.extendedLayoutIncludesOpaqueBars = true
-        navigationItem.hidesSearchBarWhenScrolling = true
-        searchController.searchBar.searchBarStyle = .minimal
     }
     
     private func setEditBarButtonItem() {
@@ -589,142 +557,6 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
     
     
     
-    // MARK: - Update from server
-    
-    private func updateExchageInfo(completion: @escaping () -> Void) {
-        BinanaceApi.getExchangeInfo { (json) in
-            guard let exchangeInfo = json else { return }
-            
-            let symbolsJsonArray = exchangeInfo["symbols"] as! [[String: Any]]
-            for symbolInfo in symbolsJsonArray {
-                let symbolName = symbolInfo["symbol"] as! String
-                let symbolStatus = symbolInfo["status"] as! String
-                let baseAsset = symbolInfo["baseAsset"] as! String
-                let baseAssetPrecision = symbolInfo["baseAssetPrecision"] as! Int
-                let quoteAsset = symbolInfo["quoteAsset"] as! String
-                let quoteAssetPrecision = symbolInfo["quotePrecision"] as! Int
-                /*let orderTypes = symbolInfo["orderTypes"]
-                 let icebergAllowed = symbolInfo["icebergAllowed"]*/
-                let filters = symbolInfo["filters"] as! [[String: Any]]
-                
-                
-                
-                if let symbol = self.app.getSymbol(symbolName) {
-                    symbol.status = symbolStatus
-                    symbol.baseAssetPrecision = baseAssetPrecision
-                    symbol.quoteAssetPrecision = quoteAssetPrecision
-                    
-                    for filter in filters {
-                        let filterType = filter["filterType"] as! String
-                        if filterType == "PRICE_FILTER" {
-                            let tickSize = Decimal(string: filter["tickSize"] as! String)!
-                            symbol.tickSize = tickSize
-                        } else if filterType == "LOT_SIZE" {
-                            let stepSize = Decimal(string: filter["stepSize"] as! String)!
-                            symbol.stepSize = stepSize
-                        }
-                    }
-                } else {
-                    let symbol = Symbol(name: symbolName, status: symbolStatus, baseAsset: baseAsset, baseAssetPrecision: baseAssetPrecision, quoteAsset: quoteAsset, quoteAssetPrecision: quoteAssetPrecision)
-                    for filter in filters {
-                        let filterType = filter["filterType"] as! String
-                        if filterType == "PRICE_FILTER" {
-                            let tickSize = Decimal(string: filter["tickSize"] as! String)!
-                            symbol.tickSize = tickSize
-                        } else if filterType == "LOT_SIZE" {
-                            let stepSize = Decimal(string: filter["stepSize"] as! String)!
-                            symbol.stepSize = stepSize
-                        }
-                    }
-                    self.app.allBinanceSymbols.append(symbol)
-                }
-            }
-            
-            completion()
-        }
-    }
-   
-    
-    private func updateSymbolsAll24HPriceChangeStatistics(completion: @escaping () -> Void) {
-        BinanaceApi.all24HPriceChagneStatistics { (array) in
-            guard let jsonArray = array else { return }
-            for json in jsonArray {
-                let symbolName = json["symbol"] as! String
-                let closePrice = json["prevClosePrice"] as! String
-                let baseAssetVolume = json["volume"] as! String
-                let quoteAssetVolume = json["quoteVolume"] as! String
-                let percentChange = json["priceChangePercent"] as! String
-                
-                guard let symbol = self.app.getSymbol(symbolName) else { return }
-                
-                symbol.price = Decimal(string: closePrice)!
-                symbol.volume = Decimal(string: baseAssetVolume)!
-                symbol.quoteAssetVolume = Decimal(string: quoteAssetVolume)!
-                symbol.percentChange = Decimal(string: percentChange)!
-                
-            }
-            completion()
-        }
-    }
-    
-    private func updateLists(completion: @escaping () -> Void = {}) {
-        var index = 0
-        for i in 0..<app.lists.count {
-            let l = app.lists[i]
-            if !l.isServerList {
-                index = i
-                break
-            }
-        }
-        
-        for symbol in app.allBinanceSymbols {
-            let quoteAsset = symbol.quoteAsset
-            if let list = self.app.getList(with: quoteAsset) {
-                if !list.contains(symbolName: symbol.name) {
-                    list.symbols.append(symbol.name)
-                }
-            } else {
-                let newList = List(name: quoteAsset, isServerList: true)
-                newList.isServerList = true
-                newList.symbols.append(symbol.name)
-                app.lists.insert(newList, at: index)
-                index += 1
-            }
-        }
-
-        var removedSymbols = [String]()
-        for i in 0 ..< app.allBinanceSymbols.count {
-            let symbol = app.allBinanceSymbols[i]
-            if symbol.status.uppercased() != "TRADING" {
-                removedSymbols.append(symbol.name)
-            }
-        }
-        app.allBinanceSymbols.removeAll { (sym) -> Bool in
-            return removedSymbols.contains(sym.name)
-        }
-        
-        
-        for list in app.lists {
-            removedSymbols.removeAll()
-            for sym in list.symbols {
-                if let s = app.getSymbol(sym) {
-                    if s.status.uppercased() != "TRADING" {
-                        removedSymbols.append(sym)
-                    }
-                } else {
-                    removedSymbols.append(sym)
-                }
-            }
-            list.symbols.removeAll { (sym) -> Bool in
-                return removedSymbols.contains(sym)
-            }
-        }
-        
-        
-        
-        completion()
-    }
-    
     //MARK: Price Ticker Streaming
     
     private func startPriceStreaming() {
@@ -749,6 +581,5 @@ class ListTVC: UITableViewController, UISearchBarDelegate, UISearchResultsUpdati
             
         }
     }
-    
-    
+
 }

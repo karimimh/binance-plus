@@ -15,7 +15,7 @@ class SortOptionsVC: UIViewController, UITableViewDataSource, UITableViewDelegat
     @IBOutlet weak var tableViewBottomConstraint: NSLayoutConstraint!
     
     var app: App!
-    var listTVC: ListTVC!
+    var listVC: ListVC!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -57,7 +57,7 @@ class SortOptionsVC: UIViewController, UITableViewDataSource, UITableViewDelegat
     
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        listTVC.needsSorting()
+        listVC.needsSorting()
         app.save()
     }
     

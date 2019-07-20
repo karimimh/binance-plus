@@ -31,7 +31,7 @@ class OptionsChooserVC: UIViewController, UITableViewDelegate, UITableViewDataSo
         tableView.dataSource = self
         tableView.allowsSelection = true
         
-        navBar.shadowImage = UIColor.lightGray.withAlphaComponent(0.7).as1ptImage()
+        navBar.shadowImage = UIColor.fromHex(hex: "#D6D6D6").as1ptImage()
         navBar.setBackgroundImage(UIColor.white.as1ptImage(), for: .default)
         
         

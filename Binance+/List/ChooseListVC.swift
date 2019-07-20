@@ -15,7 +15,7 @@ class ChooseListVC: UIViewController, UITableViewDataSource, UITableViewDelegate
     @IBOutlet weak var settingsBBI: UIBarButtonItem!
     
     var app: App?
-    var listTVC: ListTVC?
+    var listVC: ListVC?
     var selectedCell: ChooseListTVCell!
     var listChosenCompletion: (() -> Void)?
     
@@ -63,14 +63,32 @@ class ChooseListVC: UIViewController, UITableViewDataSource, UITableViewDelegate
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let app = self.app else { return UITableViewCell(style: .default, reuseIdentifier: nil) }
-        guard let listTVC = self.listTVC else { return UITableViewCell(style: .default, reuseIdentifier: nil) }
+        guard let listTVC = self.listVC else { return UITableViewCell(style: .default, reuseIdentifier: nil) }
         let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseListTVCell", for: indexPath) as! ChooseListTVCell
         let list = app.lists[indexPath.row]
         cell.label.text = list.name
         if list.isServerList && !list.symbols.isEmpty {
-            let s = list.getSymbols(app).first!.quoteAsset.lowercased() + ".png"
-            if let im = UIImage(named: s) {
-                cell.iconImageView.image = im
+            if list.name == "BTC" || list.name == "ETH" || list.name == "BNB" {
+                DispatchQueue.global(qos: .background).async {
+                    let im = UIImage(named: list.name.lowercased() + ".png")
+                    DispatchQueue.main.async {
+                        cell.iconImageView.image = im
+                    }
+                }
+            } else if list.name == "USD" {
+                DispatchQueue.global(qos: .background).async {
+                    let im = UIImage(named: "usdt" + ".png")
+                    DispatchQueue.main.async {
+                        cell.iconImageView.image = im
+                    }
+                }
+            } else if list.name == "ALTS" {
+                DispatchQueue.global(qos: .background).async {
+                    let im = UIImage(named: "xrp" + ".png")
+                    DispatchQueue.main.async {
+                        cell.iconImageView.image = im
+                    }
+                }
             }
         } else {
             if let im = UIImage(named: "star") {
@@ -89,7 +107,7 @@ class ChooseListVC: UIViewController, UITableViewDataSource, UITableViewDelegate
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if(self.listsTableView.isEditing == true) { return }
-        guard let listTVC = self.listTVC else { return }
+        guard let listTVC = self.listVC else { return }
         selectedCell.accessoryType = .none
         guard let cell = tableView.cellForRow(at: indexPath) as? ChooseListTVCell else { return }
         selectedCell = cell
@@ -197,13 +215,13 @@ class ChooseListVC: UIViewController, UITableViewDataSource, UITableViewDelegate
         {
             self.listsTableView.isEditing = false
             editBBI.title = "Edit"
-            listTVC?.parentVC.enableSliding()
+            listVC?.parentVC.enableSliding()
         }
         else
         {
             self.listsTableView.isEditing = true
             editBBI.title = "Done"
-            listTVC?.parentVC.disableSliding()
+            listVC?.parentVC.disableSliding()
         }
     }
     
