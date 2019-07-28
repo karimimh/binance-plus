@@ -68,6 +68,8 @@ class SlideUpAnimator: NSObject, UIViewControllerAnimatedTransitioning {
             presentingVC = transitionContext.viewController(forKey: .to)
             if let vc = presentingVC as? OptionsChooserVC {
                 vc.tableViewBottomConstraint.constant =  height
+            } else if let vc = presentingVC as? SlideupSelectorVC {
+                vc.collectionViewBottomConstraint.constant = height
             }
 
             bgViewTapGR = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))

@@ -40,7 +40,7 @@ class LaunchVC: UIViewController {
     
     //MARK: - Private Methods
     private func connect(completion: @escaping () -> Void) {
-        BinanaceApi.connect { (connected) in
+        BinanaceAPI.connect { (connected) in
             if !connected {
                 DispatchQueue.main.async {
                     self.activityIndicator.stopAnimating()
@@ -57,7 +57,7 @@ class LaunchVC: UIViewController {
     
     
     private func getExchageInfo(completion: @escaping () -> Void) {
-        BinanaceApi.getExchangeInfo { (json) in
+        BinanaceAPI.getExchangeInfo { (json) in
             guard let exchangeInfo = json else { return }
             self.app.allBinanceSymbols.removeAll()
             let symbolsJsonArray = exchangeInfo["symbols"] as! [[String: Any]]
@@ -73,7 +73,7 @@ class LaunchVC: UIViewController {
                 let filters = symbolInfo["filters"] as! [[String: Any]]
                 
                 
-                
+                if symbolStatus != "TRADING" { continue }
                 let symbol = Symbol(name: symbolName, status: symbolStatus, baseAsset: baseAsset, baseAssetPrecision: baseAssetPrecision, quoteAsset: quoteAsset, quoteAssetPrecision: quoteAssetPrecision)
                 
                 
@@ -97,52 +97,74 @@ class LaunchVC: UIViewController {
         }
     }
     
+    private func getBitmexActiveInstruments(completion: @escaping () -> Void) {
+        BitmexAPI.getActiveInstruments { (optionalJsonArray) in
+            guard let jsonArray = optionalJsonArray else { return }
+            
+            for symbolInfo in jsonArray {
+                let symbolName = symbolInfo["symbol"] as! String
+                let symbolStatus = symbolInfo["state"] as! String
+                let baseAsset = symbolInfo["rootSymbol"] as! String
+                let baseAssetPrecision = symbolInfo["baseAssetPrecision"] as! Int
+                let quoteAsset = symbolInfo["quoteCurrency"] as! String
+                let quoteAssetPrecision = symbolInfo["quotePrecision"] as! Int
+                let tickSize = symbolInfo["tickSize"] as! Decimal
+                let lotSize = symbolInfo["lotSize"] as! Decimal
+                
+                
+                if symbolStatus != "Open" { continue }
+                let symbol = Symbol(name: symbolName, status: symbolStatus, baseAsset: baseAsset, baseAssetPrecision: baseAssetPrecision, quoteAsset: quoteAsset, quoteAssetPrecision: quoteAssetPrecision)
+                
+                
+                symbol.tickSize = tickSize
+                symbol.stepSize = lotSize
+                
+                self.app.allBinanceSymbols.append(symbol)
+                
+            }
+        }
+        
+    }
     
     private func createLists(completion: @escaping () -> Void) {
-        let serverLists = ["BTC", "ETH", "BNB", "USD", "ALTS"]
-        
-        for n in serverLists {
-            if app.getList(with: n) == nil {
-                let list = List(name: n, isServerList: true)
-                app.lists.append(list)
-            }
+        //Remove previously saved serverLists:
+        app.lists.removeAll { (list) -> Bool in
+            return list.isServerList
         }
         
-        for list in app.lists {
-            if list.isServerList {
-                list.symbols.removeAll()
-            }
+        //Recreate them here:
+        let predefinedServerLists = ["BTC", "ETH", "BNB", "XRP", "USD"]
+        for listName in predefinedServerLists.reversed() {
+            app.lists.insert(List(name: listName, isServerList: true), at: 0)
         }
         
+        var newLists = [List]()
         for symbol in app.allBinanceSymbols {
             let serverListName = app.getServerListName(for: symbol)
             
             if let serverList = app.getList(with: serverListName) {
                 serverList.symbols.append(symbol.name)
+            } else {
+                let serverList = List(name: serverListName, isServerList: true)
+                newLists.append(serverList)
+                serverList.symbols.append(symbol.name)
             }
         }
-        
-        
-        for list in app.lists {
-            if !list.isServerList {
-                var removedSymbols = [String]()
-                for symbolName in list.symbols {
-                    if app.getSymbol(symbolName) == nil {
-                        removedSymbols.append(symbolName)
-                    }
-                }
-                list.symbols.removeAll { (s) -> Bool in
-                    return removedSymbols.contains(s)
-                }
-            }
+        app.lists.insert(contentsOf: newLists, at: 5)
+
+        app.lists.filter { (list) -> Bool in
+            return !list.isServerList
+            }.forEach { (list) in
+                list.symbols.removeAll(where: { (symbolName) -> Bool in
+                    return app.getSymbol(symbolName) == nil
+                })
         }
-        
         
         completion()
     }
     
     private func downloadSymbolsAll24HPriceChangeStatistics(completion: @escaping () -> Void) {
-        BinanaceApi.all24HPriceChagneStatistics { (array) in
+        BinanaceAPI.all24HPriceChagneStatistics { (array) in
             guard let jsonArray = array else { return }
             for json in jsonArray {
                 let symbolName = json["symbol"] as! String

@@ -41,6 +41,11 @@ class ChooseListVC: UIViewController, UITableViewDataSource, UITableViewDelegate
         listsTableView.delegate = self
         listsTableView.dataSource = self
         listsTableView.allowsSelection = true
+        
+        
+        
+        navBar.shadowImage = UIColor.fromHex(hex: "#D6D6D6").as1ptImage()
+        view.bringSubviewToFront(navBar)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -67,28 +72,12 @@ class ChooseListVC: UIViewController, UITableViewDataSource, UITableViewDelegate
         let cell = tableView.dequeueReusableCell(withIdentifier: "ChooseListTVCell", for: indexPath) as! ChooseListTVCell
         let list = app.lists[indexPath.row]
         cell.label.text = list.name
-        if list.isServerList && !list.symbols.isEmpty {
-            if list.name == "BTC" || list.name == "ETH" || list.name == "BNB" {
-                DispatchQueue.global(qos: .background).async {
-                    let im = UIImage(named: list.name.lowercased() + ".png")
-                    DispatchQueue.main.async {
-                        cell.iconImageView.image = im
-                    }
-                }
-            } else if list.name == "USD" {
-                DispatchQueue.global(qos: .background).async {
-                    let im = UIImage(named: "usdt" + ".png")
-                    DispatchQueue.main.async {
-                        cell.iconImageView.image = im
-                    }
-                }
-            } else if list.name == "ALTS" {
-                DispatchQueue.global(qos: .background).async {
-                    let im = UIImage(named: "xrp" + ".png")
-                    DispatchQueue.main.async {
-                        cell.iconImageView.image = im
-                    }
-                }
+        if list.isServerList {
+            let sym = list.symbols.first!
+            let symbol = app.getSymbol(sym)!
+            let s = symbol.quoteAsset.lowercased() + ".png"
+            if let im = UIImage(named: s) {
+                cell.iconImageView.image = im
             }
         } else {
             if let im = UIImage(named: "star") {

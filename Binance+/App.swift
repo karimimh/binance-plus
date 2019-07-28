@@ -108,12 +108,12 @@ class App: NSObject, NSCoding {
     //MARK: - Initialization
     override init() {
         super.init()
-        BinanaceApi.getServerTime { (optionalDate) in
+        BinanaceAPI.getServerTime { (optionalDate) in
             if let date = optionalDate {
                 self.serverTimeOffset = Date().toMillis() - date.toMillis()
             }
         }
-        BinanaceApi.currentAvgPrice(for: "BTCUSDT", completion: { (p) in
+        BinanaceAPI.currentAvgPrice(for: "BTCUSDT", completion: { (p) in
             if let price = p {
                 self.btcPrice = price
             }
@@ -334,12 +334,10 @@ class App: NSObject, NSCoding {
     }
     
     func getServerListName(for symbol: Symbol) -> String {
-        if symbol.quoteAsset == "BTC" || symbol.quoteAsset == "ETH" || symbol.quoteAsset == "BNB" {
-            return symbol.quoteAsset
-        } else if symbol.quoteAsset.contains("USD") {
+        if symbol.quoteAsset.contains("USD") || symbol.quoteAsset == "PAX" {
             return "USD"
         } else {
-            return "ALTS"
+            return symbol.quoteAsset
         }
     }
     

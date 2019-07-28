@@ -7,12 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A505703C2249226F0032849A /* digital-7.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A505703B2249226F0032849A /* digital-7.ttf */; };
-		A5057040224938EE0032849A /* SourceCodePro-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A505703F224938ED0032849A /* SourceCodePro-Light.ttf */; };
 		A53A784322CE057F005975E8 /* FilterTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784222CE057F005975E8 /* FilterTVCell.swift */; };
 		A53A784522CE0CD0005975E8 /* FilterTFTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784422CE0CD0005975E8 /* FilterTFTVCell.swift */; };
 		A53A784722CE0CF2005975E8 /* FilterButtonTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784622CE0CF2005975E8 /* FilterButtonTVCell.swift */; };
 		A53A784922CE0E7F005975E8 /* FilterSettingsVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784822CE0E7F005975E8 /* FilterSettingsVC.swift */; };
+		A547403522E7306B00F68A57 /* SymbolCVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547403422E7306B00F68A57 /* SymbolCVCell.swift */; };
+		A547403722E7314500F68A57 /* ListVC2.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547403622E7314500F68A57 /* ListVC2.swift */; };
+		A547403B22E8632C00F68A57 /* SimpleCVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547403A22E8632C00F68A57 /* SimpleCVCell.swift */; };
+		A547403D22E864DC00F68A57 /* SlideupSelectorVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547403C22E864DC00F68A57 /* SlideupSelectorVC.swift */; };
+		A547403F22EC3F9D00F68A57 /* BitmexApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547403E22EC3F9D00F68A57 /* BitmexApi.swift */; };
 		A5496A0E22B6C1510091F996 /* IndicatorsVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5496A0D22B6C1510091F996 /* IndicatorsVC.swift */; };
 		A5496A1622B7875E0091F996 /* OptionalTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5496A1522B7875E0091F996 /* OptionalTVCell.swift */; };
 		A5496A1822B787700091F996 /* TextFieldTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5496A1722B787700091F996 /* TextFieldTVCell.swift */; };
@@ -243,12 +246,17 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A505703B2249226F0032849A /* digital-7.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "digital-7.ttf"; path = "../../../../../Downloads/digital-7/digital-7.ttf"; sourceTree = "<group>"; };
-		A505703F224938ED0032849A /* SourceCodePro-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SourceCodePro-Light.ttf"; path = "../../../../../Downloads/source-code-pro-2.010R-ro-1.030R-it/TTF/SourceCodePro-Light.ttf"; sourceTree = "<group>"; };
 		A53A784222CE057F005975E8 /* FilterTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterTVCell.swift; sourceTree = "<group>"; };
 		A53A784422CE0CD0005975E8 /* FilterTFTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterTFTVCell.swift; sourceTree = "<group>"; };
 		A53A784622CE0CF2005975E8 /* FilterButtonTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterButtonTVCell.swift; sourceTree = "<group>"; };
 		A53A784822CE0E7F005975E8 /* FilterSettingsVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterSettingsVC.swift; sourceTree = "<group>"; };
+		A547403422E7306B00F68A57 /* SymbolCVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymbolCVCell.swift; sourceTree = "<group>"; };
+		A547403622E7314500F68A57 /* ListVC2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListVC2.swift; sourceTree = "<group>"; };
+		A547403A22E8632C00F68A57 /* SimpleCVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleCVCell.swift; sourceTree = "<group>"; };
+		A547403C22E864DC00F68A57 /* SlideupSelectorVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlideupSelectorVC.swift; sourceTree = "<group>"; };
+		A547403E22EC3F9D00F68A57 /* BitmexApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitmexApi.swift; sourceTree = "<group>"; };
+		A547404222EC3FCE00F68A57 /* digital-7.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "digital-7.ttf"; path = "../../../../../../../Downloads/digital-7/digital-7.ttf"; sourceTree = "<group>"; };
+		A547404322EC3FD000F68A57 /* SourceCodePro-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "SourceCodePro-Light.ttf"; path = "../../../../../../../Downloads/source-code-pro-2.010R-ro-1.030R-it/TTF/SourceCodePro-Light.ttf"; sourceTree = "<group>"; };
 		A5496A0D22B6C1510091F996 /* IndicatorsVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorsVC.swift; sourceTree = "<group>"; };
 		A5496A1522B7875E0091F996 /* OptionalTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OptionalTVCell.swift; path = ../../OptionalTVCell.swift; sourceTree = "<group>"; };
 		A5496A1722B787700091F996 /* TextFieldTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = TextFieldTVCell.swift; path = ../../TextFieldTVCell.swift; sourceTree = "<group>"; };
@@ -496,23 +504,31 @@
 		A50570372247D4700032849A /* Utility */ = {
 			isa = PBXGroup;
 			children = (
-				A5E07F7422E339ED0007C91C /* Icon.png */,
-				A5FC7BF42280A8A6004CC6F0 /* OptionsChooserVC.swift */,
 				A5630BF6223912FE002B0152 /* Util.swift */,
 				A5630BFC223A612A002B0152 /* WebSocket.swift */,
 				A5B7EEC1223D3DA100061811 /* AlwaysPresentAsPopover.swift */,
-				A5BF445422E0622B009EF9A7 /* SlideUpAnimator.swift */,
 			);
 			path = Utility;
 			sourceTree = "<group>";
 		};
-		A5057038224921870032849A /* Fonts */ = {
+		A547404022EC3FA300F68A57 /* API */ = {
 			isa = PBXGroup;
 			children = (
-				A505703F224938ED0032849A /* SourceCodePro-Light.ttf */,
-				A505703B2249226F0032849A /* digital-7.ttf */,
+				A5630BEC2237E649002B0152 /* BinanceApi.swift */,
+				A547403E22EC3F9D00F68A57 /* BitmexApi.swift */,
 			);
-			path = Fonts;
+			path = API;
+			sourceTree = "<group>";
+		};
+		A547404122EC3FC100F68A57 /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				A547404222EC3FCE00F68A57 /* digital-7.ttf */,
+				A547404322EC3FD000F68A57 /* SourceCodePro-Light.ttf */,
+				A5E07F7422E339ED0007C91C /* Icon.png */,
+				A5DD3F5B22DC6B480004B78C /* Coin Icons */,
+			);
+			path = Assets;
 			sourceTree = "<group>";
 		};
 		A55ECBD022D736ED00C2288A /* Scanner */ = {
@@ -558,8 +574,8 @@
 		A5630BD52237D16F002B0152 /* Binance+ */ = {
 			isa = PBXGroup;
 			children = (
-				A5DD3F5B22DC6B480004B78C /* Coin Icons */,
-				A5057038224921870032849A /* Fonts */,
+				A547404122EC3FC100F68A57 /* Assets */,
+				A547404022EC3FA300F68A57 /* API */,
 				A50570372247D4700032849A /* Utility */,
 				A5BE575F2268C0C300E4EE09 /* Custom Views */,
 				A5B7EEC9223D906700061811 /* TableCells */,
@@ -568,14 +584,17 @@
 				A55ECBD022D736ED00C2288A /* Scanner */,
 				A5630BD62237D16F002B0152 /* AppDelegate.swift */,
 				A5630BDA2237D16F002B0152 /* Main.storyboard */,
+				A547403622E7314500F68A57 /* ListVC2.swift */,
 				A589D8832258A9C2008C98C3 /* LaunchVC.swift */,
 				A5F4EFFF226E2598002EEBD2 /* ParentVC.swift */,
 				A5630BD82237D16F002B0152 /* TabBarVC.swift */,
+				A5FC7BF42280A8A6004CC6F0 /* OptionsChooserVC.swift */,
+				A547403C22E864DC00F68A57 /* SlideupSelectorVC.swift */,
+				A5BF445422E0622B009EF9A7 /* SlideUpAnimator.swift */,
 				A5630BDD2237D171002B0152 /* Assets.xcassets */,
 				A5630BDF2237D171002B0152 /* LaunchScreen.storyboard */,
 				A5630BE22237D171002B0152 /* Info.plist */,
 				A5D157DD2241399800D583D7 /* App.swift */,
-				A5630BEC2237E649002B0152 /* BinanceApi.swift */,
 				A59AD5F52258FE290024525E /* CryptoIconsApi.swift */,
 				A5630BEE2237F083002B0152 /* Symbol.swift */,
 				A5630BF22238F6F6002B0152 /* Enums.swift */,
@@ -620,6 +639,7 @@
 		A5B7EEC9223D906700061811 /* TableCells */ = {
 			isa = PBXGroup;
 			children = (
+				A547403A22E8632C00F68A57 /* SimpleCVCell.swift */,
 				A5630BE82237D27F002B0152 /* SymbolTableViewCell.swift */,
 				A5BE57642268EAE500E4EE09 /* SortOptionTVCell.swift */,
 				A56B86D1226C6F7E003B153B /* ChooseListTVCell.swift */,
@@ -631,6 +651,7 @@
 				A53A784222CE057F005975E8 /* FilterTVCell.swift */,
 				A53A784422CE0CD0005975E8 /* FilterTFTVCell.swift */,
 				A53A784622CE0CF2005975E8 /* FilterButtonTVCell.swift */,
+				A547403422E7306B00F68A57 /* SymbolCVCell.swift */,
 			);
 			path = TableCells;
 			sourceTree = "<group>";
@@ -976,7 +997,6 @@
 				A5DD406E22DC6B480004B78C /* amb.png in Resources */,
 				A5DD40A622DC6B480004B78C /* vet.png in Resources */,
 				A5DD409F22DC6B480004B78C /* steem.png in Resources */,
-				A5057040224938EE0032849A /* SourceCodePro-Light.ttf in Resources */,
 				A5DD404722DC6B480004B78C /* gto.png in Resources */,
 				A5DD407E22DC6B480004B78C /* data.png in Resources */,
 				A5DD401122DC6B480004B78C /* ost.png in Resources */,
@@ -1043,7 +1063,6 @@
 				A5DD403322DC6B480004B78C /* link.png in Resources */,
 				A5DD402722DC6B480004B78C /* wtc.png in Resources */,
 				A5DD407F22DC6B480004B78C /* trig.png in Resources */,
-				A505703C2249226F0032849A /* digital-7.ttf in Resources */,
 				A5DD400722DC6B480004B78C /* dnt.png in Resources */,
 				A5DD408A22DC6B480004B78C /* mana.png in Resources */,
 				A5DD407322DC6B480004B78C /* ncash.png in Resources */,
@@ -1069,10 +1088,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A547403B22E8632C00F68A57 /* SimpleCVCell.swift in Sources */,
 				A5B7EEC2223D3DA100061811 /* AlwaysPresentAsPopover.swift in Sources */,
 				A5630BFD223A612A002B0152 /* WebSocket.swift in Sources */,
 				A5FC7BF72281B8EA004CC6F0 /* ScannerFilter.swift in Sources */,
 				A5630BF52238F94E002B0152 /* Candle.swift in Sources */,
+				A547403522E7306B00F68A57 /* SymbolCVCell.swift in Sources */,
 				A5FC7BEB227AFE93004CC6F0 /* IndicatorView.swift in Sources */,
 				A5630BED2237E64A002B0152 /* BinanceApi.swift in Sources */,
 				A5B7EEBC223C0BF000061811 /* List.swift in Sources */,
@@ -1106,11 +1127,13 @@
 				A5630BF32238F6F6002B0152 /* Enums.swift in Sources */,
 				A5630BD72237D16F002B0152 /* AppDelegate.swift in Sources */,
 				A5BA606C22B813BB001924F6 /* ColorPalletCVC.swift in Sources */,
+				A547403F22EC3F9D00F68A57 /* BitmexApi.swift in Sources */,
 				A5AD9D9C22CA38A500ECEB6E /* ChartSymbolTVCell.swift in Sources */,
 				A5630BF7223912FE002B0152 /* Util.swift in Sources */,
 				A5BE575A2268798300E4EE09 /* LaunchScene.swift in Sources */,
 				A577308B2279820A00C08158 /* Chart.swift in Sources */,
 				A5DD40B322DC7BBF0004B78C /* PriceLineView.swift in Sources */,
+				A547403D22E864DC00F68A57 /* SlideupSelectorVC.swift in Sources */,
 				A5FC7BEF228023B9004CC6F0 /* ScannerVC.swift in Sources */,
 				A56B86D4226C713D003B153B /* ChooseListVC.swift in Sources */,
 				A53A784522CE0CD0005975E8 /* FilterTFTVCell.swift in Sources */,
@@ -1122,6 +1145,7 @@
 				A5BE57652268EAE500E4EE09 /* SortOptionTVCell.swift in Sources */,
 				A5BE575E2268C0B700E4EE09 /* ListTitleView.swift in Sources */,
 				A5BE57672268F21200E4EE09 /* SortOptionsVC.swift in Sources */,
+				A547403722E7314500F68A57 /* ListVC2.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1282,7 +1306,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.behnamkarimi.binanceplus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -1305,7 +1329,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.behnamkarimi.binanceplus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

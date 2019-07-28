@@ -9,7 +9,7 @@
 import UIKit
 import Network
 
-class BinanaceApi {
+class BinanaceAPI {
     
     
     static func connect(completion: @escaping (Bool) -> Void) {

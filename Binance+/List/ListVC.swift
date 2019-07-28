@@ -192,7 +192,7 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
         
         if symbol.lastesThirtyDailyCandles == nil {
             DispatchQueue.global(qos: .background).async {
-                BinanaceApi.getCandles(symbol: symbol, timeframe: .daily, limit: 30, completion: { (optionalCandles) in
+                BinanaceAPI.getCandles(symbol: symbol, timeframe: .daily, limit: 30, completion: { (optionalCandles) in
                     if let candles = optionalCandles {
                         symbol.lastesThirtyDailyCandles = candles
                         DispatchQueue.main.async {
@@ -375,7 +375,9 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
             }
             self.needsSorting()
         }
-        
+
+//        let vc = storyboard?.instantiateViewController(withIdentifier: "ListVC2") as! ListVC2
+//        parentVC.present(vc, animated: true, completion: nil)
     }
     
     
@@ -472,7 +474,9 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
         v.label.text = activeList.name
         
         if activeList.isServerList && !activeList.symbols.isEmpty {
-            let s = activeList.getSymbols(app).first!.quoteAsset.lowercased() + ".png"
+            let sym = activeList.symbols.first!
+            let symbol = app.getSymbol(sym)!
+            let s = symbol.quoteAsset.lowercased() + ".png"
             if let im = UIImage(named: s) {
                 v.imageView.image = im
             }
@@ -560,7 +564,7 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
     //MARK: Price Ticker Streaming
     
     private func startPriceStreaming() {
-        BinanaceApi.allMarketMiniTickersStream { (ws, jsonArray) in
+        BinanaceAPI.allMarketMiniTickersStream { (ws, jsonArray) in
             self.miniTickerWebSocket = ws
             guard let array = jsonArray else { return }
             for json in array {

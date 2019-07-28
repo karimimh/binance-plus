@@ -38,7 +38,8 @@ class OptionsChooserVC: UIViewController, UITableViewDelegate, UITableViewDataSo
         navItem = UINavigationItem(title: "")
         navItem.leftBarButtonItem = UIBarButtonItem(title: title, style: .plain, target: nil, action: nil)
         navItem.leftBarButtonItem?.tintColor = UIColor.purple
-        navItem.leftBarButtonItem?.setTitleTextAttributes([NSAttributedString.Key.font: UIFont.systemFont(ofSize: 20, weight: .bold), NSAttributedString.Key.foregroundColor: UIColor.purple], for: .normal)
+        navItem.leftBarButtonItem?.isEnabled = false
+        navItem.leftBarButtonItem?.setTitleTextAttributes([NSAttributedString.Key.font: UIFont.systemFont(ofSize: 20, weight: .bold), NSAttributedString.Key.foregroundColor: UIColor.purple], for: .disabled)
         navItem.leftBarButtonItem?.setTitlePositionAdjustment(UIOffset(horizontal: -7.5, vertical: -10), for: .default)
         navBar.items = [navItem]
         

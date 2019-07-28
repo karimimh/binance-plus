@@ -136,7 +136,7 @@ class ScannerVC: UIViewController, UITableViewDelegate, UITableViewDataSource  {
         for sym in symbolsFound {
             symbolsFoundS.append(app.getSymbol(sym)!)
         }
-        BinanaceApi.getCandlesForSymbols(symbolsFoundS, timeframe: filter.timeframe) { (downloadedCandles) in
+        BinanaceAPI.getCandlesForSymbols(symbolsFoundS, timeframe: filter.timeframe) { (downloadedCandles) in
             var candles = [String: [Candle]]()
             for item in downloadedCandles {
                 var newArr = [Candle]()

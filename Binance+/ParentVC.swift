@@ -47,6 +47,12 @@ class ParentVC: UIViewController, UIGestureRecognizerDelegate {
     var optionsChooserCompletion: ((Int) -> Void)?
     var optionsChooserShouldDismissOnSelection = true
     
+    
+    var slideupSelectorTitle = "Select Option"
+    var slideupSelectorOptions = [String]()
+    var slideupSelectorCompletion: ((Int) -> Void)?
+    var slideupSelectorShouldDismissOnSelection = true
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -69,7 +75,13 @@ class ParentVC: UIViewController, UIGestureRecognizerDelegate {
         performSegue(withIdentifier: "ShowOptionsSegue", sender: self)
     }
     
-    
+    func slideUpSelector(options: [String], title: String? = nil, shouldDismissOnSelection: Bool = true, completion: @escaping ((Int) -> Void)) {
+        slideupSelectorTitle = title ?? "SelectOption"
+        slideupSelectorShouldDismissOnSelection = shouldDismissOnSelection
+        slideupSelectorOptions = options
+        slideupSelectorCompletion = completion
+        performSegue(withIdentifier: "ShowSlideupSelectorSegue", sender: self)
+    }
     
     
     //MARK: - SlideRight VC
@@ -207,6 +219,13 @@ class ParentVC: UIViewController, UIGestureRecognizerDelegate {
             vc.options = optionsChooserOptions
             vc.completion = optionsChooserCompletion
             vc.transitioningDelegate = self
+        case let vc as SlideupSelectorVC:
+            bottomContainerVC = vc
+            vc.title = slideupSelectorTitle
+            vc.shouldDismissOnSelect = slideupSelectorShouldDismissOnSelection
+            vc.options = slideupSelectorOptions
+            vc.completion = slideupSelectorCompletion
+            vc.transitioningDelegate = self
         default:
             break
         }
@@ -225,6 +244,12 @@ extension ParentVC: UIViewControllerTransitioningDelegate {
         switch bottomContainerVC {
         case _ as OptionsChooserVC:
             var h = CGFloat(88 + 44 * optionsChooserOptions.count)
+            if h > UIScreen.main.bounds.height * 0.65 { h = UIScreen.main.bounds.height * 0.65 }
+            transition.height = h
+        case let vc as SlideupSelectorVC:
+            let n = Int(UIScreen.main.bounds.width / (vc.cellWidth + vc.spacingX)) - 1
+            let rows = (slideupSelectorOptions.count / n) + 1
+            var h = CGFloat(rows) * (vc.spacingY + vc.cellHeight)
             if h > UIScreen.main.bounds.height * 0.65 { h = UIScreen.main.bounds.height * 0.65 }
             transition.height = h
         default:

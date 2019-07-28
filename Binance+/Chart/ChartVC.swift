@@ -164,7 +164,7 @@ class ChartVC: UIViewController {
         settingsBBI.isEnabled = false
         
         let N = 500
-        BinanaceApi.getCandles(symbol: app.getSymbol(app.chartSymbol)!, timeframe: app.chartTimeframe, limit: N < 1000 ? N : 1000) { (arr) in
+        BinanaceAPI.getCandles(symbol: app.getSymbol(app.chartSymbol)!, timeframe: app.chartTimeframe, limit: N < 1000 ? N : 1000) { (arr) in
             if let candles = arr {
                 self.app.chartCandles = candles
                 DispatchQueue.main.async {
@@ -187,7 +187,7 @@ class ChartVC: UIViewController {
                 }
             }
         }
-        BinanaceApi.candlestickStream(symbolName: app.chartSymbol, timeframe: app.chartTimeframe) { (optionalWS, optionalJSON) in
+        BinanaceAPI.candlestickStream(symbolName: app.chartSymbol, timeframe: app.chartTimeframe) { (optionalWS, optionalJSON) in
             guard let json = optionalJSON else { optionalWS?.close(); return }
             guard self.chart != nil else { optionalWS?.close(); return }
             guard self.chart.isInitializationComplete else { optionalWS?.close(); return }
@@ -276,7 +276,7 @@ class ChartVC: UIViewController {
         let endTime = app.chartCandles.first!.openTime.utcToLocal().toMillis() - Int64(app.chartTimeframe.toMinutes()) * 60 * 1000
         let beginTime: Int64 = endTime - Int64(N) * Int64(app.chartTimeframe.toMinutes()) * 60 * 1000
         
-        BinanaceApi.getCandles(symbol: app.getSymbol(app.chartSymbol)!, timeframe: app.chartTimeframe, startTime: beginTime, endTime: endTime) { (arr) in
+        BinanaceAPI.getCandles(symbol: app.getSymbol(app.chartSymbol)!, timeframe: app.chartTimeframe, startTime: beginTime, endTime: endTime) { (arr) in
             if let extraCandles = arr {
                 DispatchQueue.main.sync {
                     self.app.chartCandles.insert(contentsOf: extraCandles, at: 0)
@@ -327,14 +327,21 @@ class ChartVC: UIViewController {
 
     @IBAction func timeframeBBIClicked(_ sender: UIBarButtonItem) {
         var options: [String] = Timeframe.allValues()
-        parentVC.slideUpOptionsChooser(options: options, title: "Select Timeframe") { (index) in
+//        parentVC.slideUpOptionsChooser(options: options, title: "Select Timeframe") { (index) in
+//            self.app.chartTimeframe = Timeframe(rawValue: options[index])!
+//            DispatchQueue.main.async {
+//                self.reloadChart()
+//                self.timeframeBBI.title = options[index]
+//            }
+//        }
+        //ShowSlideupSelectorSegue
+        parentVC.slideUpSelector(options: options, title: "Select Timeframe", shouldDismissOnSelection: true) { (index) in
             self.app.chartTimeframe = Timeframe(rawValue: options[index])!
             DispatchQueue.main.async {
                 self.reloadChart()
                 self.timeframeBBI.title = options[index]
             }
         }
-        
     }
 
     @IBAction func settingsBBIClicked(_ sender: UIBarButtonItem) {
