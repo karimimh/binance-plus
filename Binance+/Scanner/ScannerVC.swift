@@ -140,7 +140,7 @@ class ScannerVC: UIViewController, UITableViewDelegate, UITableViewDataSource  {
             var candles = [String: [Candle]]()
             for item in downloadedCandles {
                 var newArr = [Candle]()
-                for i in 0 ..< item.value.count - 1 {
+                for i in 0 ..< item.value.count {
                     newArr.append(item.value[i])
                 }
                 candles[item.key] = newArr
@@ -212,8 +212,9 @@ class ScannerVC: UIViewController, UITableViewDelegate, UITableViewDataSource  {
         case .rsi_divergence:
             for i in 0 ..< symbolsFound.count {
                 let symbolName = symbolsFound[i]
+                let candles = allCandles[symbolName]!
                 var data = [Decimal]()
-                for candle in allCandles[symbolName]! {
+                for candle in candles {
                     data.append(candle.close)
                 }
                 let length = filter.properties[Indicator.PropertyKey.length] as! Int
@@ -223,56 +224,80 @@ class ScannerVC: UIViewController, UITableViewDelegate, UITableViewDataSource  {
                 }
                 let rsi = Indicators.rsi(data: data, length: length)
                 let bullOrBear = filter.properties[Indicator.PropertyKey.bullishOrBearish] as! String
+                let isBullish = bullOrBear == "Bullish"
                 
-                var x = rsi.count - 2
-                var foundX = false
-                while x > rsi.count - 6 && x > 2 {
-                    if bullOrBear == "Bullish" {
-                        if rsi[x] > filter.rValue {
-                            x -= 1
-                            continue
+                let trendPoints = Indicators.findTrendPoints(candles: candles)
+                if trendPoints.count <= 2 {
+                    removedSymbols.append(symbolName)
+                    continue
+                }
+                let finalPoint = trendPoints[trendPoints.count - 2]
+                let pf = finalPoint.price
+                let xf = finalPoint.candleIndex
+                if isBullish && finalPoint.price > trendPoints.last!.price {
+                    removedSymbols.append(symbolName)
+                    continue
+                } else if !isBullish && finalPoint.price < trendPoints.last!.price {
+                    removedSymbols.append(symbolName)
+                    continue
+                } else if trendPoints.count < 4 {
+                    removedSymbols.append(symbolName)
+                    continue
+                }
+                var c = trendPoints.count - 4
+                var passedEndpointTest = false
+                var initialPoint = trendPoints[c]
+                while c >= 0 {
+                    initialPoint = trendPoints[c]
+                    let pi = initialPoint.price
+                    let xi = initialPoint.candleIndex
+                    
+                    if isBullish {
+                        if pi <= pf {
+                            removedSymbols.append(symbolName)
+                            break
+                        } else if rsi[xi] <= rsi[xf] {
+                            passedEndpointTest = true
+                            break
                         }
                     } else {
-                        if rsi[x] < filter.rValue {
-                            x -= 1
-                            continue
+                        if pi >= pf {
+                            removedSymbols.append(symbolName)
+                            break
+                        } else if rsi[xi] >= rsi[xf] {
+                            passedEndpointTest = true
+                            break
                         }
                     }
-                    if rsi[x] < rsi[x - 1] && rsi[x] < rsi[x + 1] && data[x] < data[x + 1] && data[x] < data[x - 1] {
-                        foundX = true
-                        break
-                    }
-                    
-                    x -= 1
+                    c -= 2
                 }
-                if !foundX {
+                var passedInitialPointTest = true
+                let pi = initialPoint.price
+                let xi = initialPoint.candleIndex
+                if passedEndpointTest {
+                    while c < trendPoints.count {
+                        let finalPoint = trendPoints[c]
+                        let pf = finalPoint.price
+                        let xf = finalPoint.candleIndex
+                        if isBullish {
+                            if pi > pf && rsi[xi] <= rsi[xf] {
+                                passedInitialPointTest = false
+                                break
+                            }
+                        } else {
+                            if pi < pf && rsi[xi] >= rsi[xf] {
+                                passedInitialPointTest = false
+                                break
+                            }
+                        }
+                        
+                        c += 2
+                    }
+                }
+                if !passedInitialPointTest {
                     removedSymbols.append(symbolName)
-                    continue
                 }
-                var y = x - 2
-                var divIndex = -1
-                while y > 0 {
-                    if rsi[y] < rsi[y - 1] && rsi[y] < rsi[y + 1] && data[y] < data[y + 1] && data[y] < data[y - 1] &&
-                        rsi[y] < rsi[x] && data[y] > data[x] {
-                        divIndex = y
-                        break
-                    }
-                    y -= 1
-                }
-                
-                if divIndex == -1 {
-                    removedSymbols.append(symbolName)
-                    continue
-                }
-                
-                for t in (divIndex + 1) ..< x {
-                    let lineRSI = rsi[divIndex] + (rsi[x] - rsi[divIndex]) * Decimal(t - divIndex) / Decimal(x - divIndex)
-                    if rsi[t] < lineRSI {
-                        removedSymbols.append(symbolName)
-                        break
-                    }
-                }
-                
+
             }
         case .macd_bar:
             for i in 0 ..< symbolsFound.count {

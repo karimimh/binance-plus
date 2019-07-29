@@ -115,6 +115,31 @@ class MainView: UIView {
             }
         }
         
+        ctx.setStrokeColor(UIColor.black.cgColor)
+        ctx.setLineWidth(0.8)
+        ctx.setLineJoin(.round)
+        ctx.beginPath()
+        let trendLines = Indicators.findTrendPoints(candles: visibleCandles)
+        let y = self.y(price: trendLines.first!.price, frameHeight: frame.height, highestPrice: highestPrice, lowestPrice: lowestPrice)
+        ctx.move(to: CGPoint(x: visibleCandles[trendLines.first!.candleIndex].x, y: y))
+        for (candleIndex, price) in trendLines {
+            let y = self.y(price: price, frameHeight: frame.height, highestPrice: highestPrice, lowestPrice: lowestPrice)
+            ctx.addLine(to: CGPoint(x: visibleCandles[candleIndex].x, y: y))
+        }
+        ctx.strokePath()
+//
+//        ctx.setStrokeColor(UIColor.blue.cgColor)
+//        ctx.setLineWidth(1.0)
+//        ctx.setLineJoin(.round)
+//        ctx.beginPath()
+//        let mergedTrendLines = Indicators.mergeSmallTrendLines(points: trendLines)
+//        let mergedY = self.y(price: trendLines.first!.price, frameHeight: frame.height, highestPrice: highestPrice, lowestPrice: lowestPrice)
+//        ctx.move(to: CGPoint(x: visibleCandles[trendLines.first!.candleIndex].x, y: mergedY))
+//        for (candleIndex, price) in mergedTrendLines {
+//            let y = self.y(price: price, frameHeight: frame.height, highestPrice: highestPrice, lowestPrice: lowestPrice)
+//            ctx.addLine(to: CGPoint(x: visibleCandles[candleIndex].x, y: y))
+//        }
+//        ctx.strokePath()
 
         //Draw Title, Value:
         

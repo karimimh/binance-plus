@@ -6,8 +6,8 @@
 //  Copyright © 1398 AP Behnam Karimi. All rights reserved.
 //
 
-import Foundation
 import Darwin
+import UIKit
 
 class Indicators {
     
@@ -196,7 +196,212 @@ class Indicators {
     
     
     
+    /// returns best fitting trend line
+    static func findTrendPoints(candles: [Candle]) -> [(candleIndex: Int, price: Decimal)] {
+        var result = [(candleIndex: Int, price: Decimal)]()
+        
+        if candles.count < 2 { return result }
+        
+        var isBullish = true
+        if candles[1].high > candles[0].high {
+            isBullish = true
+        } else if candles[1].low < candles[0].low {
+            isBullish = false
+        } else if candles[1].close > candles[0].close {
+            isBullish = true
+        } else if candles[1].close < candles[0].close {
+            isBullish = false
+        } else if candles[0].isGreen() {
+            isBullish = true
+        } else {
+            isBullish = false
+        }
+
+        result.append((0, candles[0].open))
+        if isBullish {
+            result.append((1, candles[1].high))
+        } else {
+            result.append((1, candles[1].low))
+        }
+        
+        var i = 2
+        while i < candles.count {
+            let candle = candles[i]
+            
+            if isBullish {
+                if candle.high > result.last!.price { // Trend Continuation
+                    result.removeLast()
+                    result.append((i, candle.high))
+                } else if candle.close < candles[result.last!.candleIndex].open { // Trend Reversal
+                    isBullish = false
+                    result.append((i, candle.low))
+                }
+            } else {// isBearish
+                if candle.low < result.last!.price { // Trend Continuation
+                    result.removeLast()
+                    result.append((i, candle.low))
+                } else if candle.close > candles[result.last!.candleIndex].open { // Trend Reversal
+                    isBullish = true
+                    result.append((i, candle.high))
+                }
+            }
+            
+            i += 1
+        }
+        if result.last!.candleIndex != candles.count - 1 {
+            result.append((candleIndex: candles.count - 1, price: candles.last!.close))
+        }
+        return result
+    }
     
     
     
+    static func mergeSmallTrendLines(points: [(candleIndex: Int, price: Decimal)]) -> [(candleIndex: Int, price: Decimal)] {
+        if points.count < 3 { return points }
+        var result = [(candleIndex: Int, price: Decimal)]()
+        
+        var trendLines = [TrendLine]()
+        for i in 1..<points.count {
+            trendLines.append(TrendLine(initialPoint: points[i - 1], endPoint: points[i]))
+        }
+        result.append(points[0])
+        result.append(points[1])
+        result.append(points[2])
+        
+        if trendLines.count <= 2 { return result }
+        
+        var isBullish = trendLines[1].endPoint.price > trendLines[0].initialPoint.price
+        
+        var i = 2
+        while i < trendLines.count {
+            if isBullish {
+                if trendLines[i].isBearish() {
+                    if trendLines[i].endPoint.price < trendLines[i - 1].initialPoint.price {
+                        isBullish = false
+                        result.append(trendLines[i].endPoint)
+                    }
+                } else {
+                    if trendLines[i].endPoint.price < trendLines[i - 1].initialPoint.price {
+                        isBullish = false
+                        result.append(trendLines[i].initialPoint)
+                    } else {
+                        result.removeLast()
+                        result.append(trendLines[i].endPoint)
+                    }
+                }
+            } else { // isBearish:
+                if trendLines[i].isBullish() {
+                    if trendLines[i].endPoint.price > trendLines[i - 1].initialPoint.price {
+                        isBullish = true
+                        result.append(trendLines[i].endPoint)
+                    }
+                } else {
+                    if trendLines[i].endPoint.price > trendLines[i - 1].initialPoint.price {
+                        isBullish = true
+                        result.append(trendLines[i].initialPoint)
+                    } else {
+                        result.removeLast()
+                        result.append(trendLines[i].endPoint)
+                    }
+                }
+            }
+            
+            i += 1
+        }
+        return result
+    }
+    
+    
+    static func findBestFittingLineEndPoint(points: [CGPoint]) -> CGPoint {
+        let xs = points.map { (point) -> CGFloat in
+            return point.x
+        }
+        let ys = points.map { (point) -> CGFloat in
+            return point.y
+        }
+        let X = xs.reduce(0) { r, x in
+            r + x
+        } / CGFloat(xs.count)
+        let Y = ys.reduce(0) { r, y in
+            r + y
+        } / CGFloat(ys.count)
+        
+        var numSum: CGFloat = 0
+        var denumSum: CGFloat = 0
+        for i in 0..<points.count {
+            numSum += (xs[i] - X) * (ys[i] - Y)
+            denumSum += (xs[i] - X) * (xs[i] - X)
+        }
+        
+        let m = numSum / denumSum
+        let y0 = Y - m * X
+        
+        let endX = points.last!.y
+        let endY = m * endX + y0
+        
+        return CGPoint(x: endX, y: endY)
+    }
+    
+    
+    static func findTrendPoints2(candles: [Candle]) -> [(candleIndex: Int, price: Decimal)] {
+        var result = [(candleIndex: Int, price: Decimal)]()
+        
+        if candles.count < 2 { return result }
+        
+        var isBullish = true
+        if candles[1].close >= candles[0].open {
+            isBullish = true
+        } else {
+            isBullish = false
+        }
+        
+        result.append((0, candles[0].open))
+        result.append((1, candles[1].close))
+        
+        var i = 2
+        while i < candles.count {
+            let candle = candles[i]
+            let latestTrendPointCandle = candles[result.last!.candleIndex]
+            
+            if isBullish {
+                if candle.close > latestTrendPointCandle.close { // Trend Continuation
+                    result.removeLast()
+                    result.append((i, candle.high))
+                } else if candle.close < latestTrendPointCandle.open { // Trend Reversal
+                    isBullish = false
+                    result.append((i, candle.low))
+                }
+            } else {// isBearish
+                if candle.close < latestTrendPointCandle.close { // Trend Continuation
+                    result.removeLast()
+                    result.append((i, candle.low))
+                } else if candle.close > latestTrendPointCandle.open { // Trend Reversal
+                    isBullish = true
+                    result.append((i, candle.high))
+                }
+            }
+            
+            i += 1
+        }
+        if result.last!.candleIndex != candles.count - 1 {
+            result.append((candleIndex: candles.count - 1, price: candles.last!.close))
+        }
+        return result
+    }
+    
+}
+
+class TrendLine {
+    var initialPoint: (candleIndex: Int, price: Decimal)
+    var endPoint: (candleIndex: Int, price: Decimal)
+    init(initialPoint: (Int, Decimal), endPoint: (Int, Decimal)) {
+        self.initialPoint = initialPoint
+        self.endPoint = endPoint
+    }
+    func isBullish() -> Bool {
+        return endPoint.price >= initialPoint.price
+    }
+    func isBearish() -> Bool {
+        return !isBullish()
+    }
 }

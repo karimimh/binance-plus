@@ -47,7 +47,7 @@ class CrosshairView: UIView {
         path.move(to: CGPoint(x: 0, y: position.y))
         path.addLine(to: CGPoint(x: w, y: position.y))
         
-        ctx.setLineDash(phase: 0, lengths: [5.0, 3.0])
+        ctx.setLineDash(phase: 0, lengths: [8.0, 8.0])
         ctx.setLineWidth(0.75)
         ctx.setStrokeColor(UIColor.black.cgColor)
         

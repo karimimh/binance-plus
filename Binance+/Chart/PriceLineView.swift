@@ -11,11 +11,9 @@ import UIKit
 class PriceLineView: UIView {
     var isEnabled = false
     let chart: Chart
-    let timeFont: UIFont
     
     init(chart: Chart) {
         self.chart = chart
-        timeFont = UIFont(name: "digital-7", size: 11)!
         super.init(frame: .zero)
         isUserInteractionEnabled = false
         backgroundColor = .clear
