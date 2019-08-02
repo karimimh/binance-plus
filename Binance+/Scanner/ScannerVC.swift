@@ -271,28 +271,30 @@ class ScannerVC: UIViewController, UITableViewDelegate, UITableViewDataSource  {
                     }
                     c -= 2
                 }
+                if !passedEndpointTest {
+                    continue
+                }
+                c += 4
                 var passedInitialPointTest = true
                 let pi = initialPoint.price
                 let xi = initialPoint.candleIndex
-                if passedEndpointTest {
-                    while c < trendPoints.count {
-                        let finalPoint = trendPoints[c]
-                        let pf = finalPoint.price
-                        let xf = finalPoint.candleIndex
-                        if isBullish {
-                            if pi > pf && rsi[xi] <= rsi[xf] {
-                                passedInitialPointTest = false
-                                break
-                            }
-                        } else {
-                            if pi < pf && rsi[xi] >= rsi[xf] {
-                                passedInitialPointTest = false
-                                break
-                            }
+                while c < trendPoints.count - 2 {
+                    let finalPoint = trendPoints[c]
+                    let pf = finalPoint.price
+                    let xf = finalPoint.candleIndex
+                    if isBullish {
+                        if pi > pf && rsi[xi] <= rsi[xf] {
+                            passedInitialPointTest = false
+                            break
                         }
-                        
-                        c += 2
+                    } else {
+                        if pi < pf && rsi[xi] >= rsi[xf] {
+                            passedInitialPointTest = false
+                            break
+                        }
                     }
+                    
+                    c += 2
                 }
                 if !passedInitialPointTest {
                     removedSymbols.append(symbolName)

@@ -194,6 +194,42 @@ class Indicators {
     }
     
     
+    static func findTrendPoints0(candles: [Candle]) -> [(candleIndex: Int, price: Decimal)] {
+        var result = [(candleIndex: Int, price: Decimal)]()
+        
+        if candles.count < 2 { return result }
+        
+        var isBullish = candles[1].close >= candles[0].close
+        
+        result.append((0, candles[0].open))
+        result.append((1, candles[1].close))
+        
+        var i = 2
+        while i < candles.count {
+            let candle = candles[i]
+            let index = result.last!.candleIndex
+            
+            if isBullish {
+                if candle.close >= candles[index].close { // Trend Continuation
+                    result.removeLast()
+                    result.append((i, candle.close))
+                } else { // Trend Reversal
+                    isBullish = false
+                    result.append((i, candle.close))
+                }
+            } else {// isBearish
+                if candle.close <= candles[index].close { // Trend Continuation
+                    result.removeLast()
+                    result.append((i, candle.close))
+                } else { // Trend Reversal
+                    isBullish = true
+                    result.append((i, candle.close))
+                }
+            }
+            i += 1
+        }
+        return result
+    }
     
     
     /// returns best fitting trend line
@@ -216,33 +252,34 @@ class Indicators {
         } else {
             isBullish = false
         }
-
+        
         result.append((0, candles[0].open))
         if isBullish {
-            result.append((1, candles[1].high))
+            result.append((1, candles[1].close))
         } else {
-            result.append((1, candles[1].low))
+            result.append((1, candles[1].close))
         }
         
         var i = 2
         while i < candles.count {
             let candle = candles[i]
             
+            let index = result.last!.candleIndex
             if isBullish {
-                if candle.high > result.last!.price { // Trend Continuation
+                if candle.close > candles[index].close { // Trend Continuation
                     result.removeLast()
-                    result.append((i, candle.high))
-                } else if candle.close < candles[result.last!.candleIndex].open { // Trend Reversal
+                    result.append((i, candle.close))
+                } else if candle.close < candles[index].open { // Trend Reversal
                     isBullish = false
-                    result.append((i, candle.low))
+                    result.append((i, candle.close))
                 }
             } else {// isBearish
-                if candle.low < result.last!.price { // Trend Continuation
+                if candle.close < candles[index].close { // Trend Continuation
                     result.removeLast()
-                    result.append((i, candle.low))
-                } else if candle.close > candles[result.last!.candleIndex].open { // Trend Reversal
+                    result.append((i, candle.close))
+                } else if candle.close > candles[index].open { // Trend Reversal
                     isBullish = true
-                    result.append((i, candle.high))
+                    result.append((i, candle.close))
                 }
             }
             
@@ -253,8 +290,6 @@ class Indicators {
         }
         return result
     }
-    
-    
     
     static func mergeSmallTrendLines(points: [(candleIndex: Int, price: Decimal)]) -> [(candleIndex: Int, price: Decimal)] {
         if points.count < 3 { return points }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A50EF6E922F095F900D414C2 /* AnalyzerApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50EF6E822F095F900D414C2 /* AnalyzerApi.swift */; };
 		A53A784322CE057F005975E8 /* FilterTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784222CE057F005975E8 /* FilterTVCell.swift */; };
 		A53A784522CE0CD0005975E8 /* FilterTFTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784422CE0CD0005975E8 /* FilterTFTVCell.swift */; };
 		A53A784722CE0CF2005975E8 /* FilterButtonTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784622CE0CF2005975E8 /* FilterButtonTVCell.swift */; };
@@ -246,6 +247,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A50EF6E822F095F900D414C2 /* AnalyzerApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzerApi.swift; sourceTree = "<group>"; };
 		A53A784222CE057F005975E8 /* FilterTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterTVCell.swift; sourceTree = "<group>"; };
 		A53A784422CE0CD0005975E8 /* FilterTFTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterTFTVCell.swift; sourceTree = "<group>"; };
 		A53A784622CE0CF2005975E8 /* FilterButtonTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterButtonTVCell.swift; sourceTree = "<group>"; };
@@ -513,6 +515,7 @@
 			isa = PBXGroup;
 			children = (
 				A5630BEC2237E649002B0152 /* BinanceApi.swift */,
+				A50EF6E822F095F900D414C2 /* AnalyzerApi.swift */,
 				A547403E22EC3F9D00F68A57 /* BitmexApi.swift */,
 			);
 			path = API;
@@ -1090,6 +1093,7 @@
 				A5FC7BF72281B8EA004CC6F0 /* ScannerFilter.swift in Sources */,
 				A5630BF52238F94E002B0152 /* Candle.swift in Sources */,
 				A547403522E7306B00F68A57 /* SymbolCVCell.swift in Sources */,
+				A50EF6E922F095F900D414C2 /* AnalyzerApi.swift in Sources */,
 				A5FC7BEB227AFE93004CC6F0 /* IndicatorView.swift in Sources */,
 				A5630BED2237E64A002B0152 /* BinanceApi.swift in Sources */,
 				A5B7EEBC223C0BF000061811 /* List.swift in Sources */,
