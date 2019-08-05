@@ -60,7 +60,7 @@ class AddSymbolsTVC: UITableViewController, UISearchBarDelegate, UISearchResults
 //            }
 //        }
         vc.needsSorting()
-        vc.tableView.reloadData()
+        vc.collectionView.reloadData()
         vc.app.save()
         self.navigationController?.popViewController(animated: true)
         self.dismiss(animated: true, completion: nil)

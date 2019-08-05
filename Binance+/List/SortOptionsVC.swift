@@ -5,7 +5,7 @@
 //  Created by Behnam Karimi on 1/29/1398 AP.
 //  Copyright © 1398 AP Behnam Karimi. All rights reserved.
 //
-
+/*
 import UIKit
 
 class SortOptionsVC: UIViewController, UITableViewDataSource, UITableViewDelegate {
@@ -81,3 +81,4 @@ class SortOptionsVC: UIViewController, UITableViewDataSource, UITableViewDelegat
     */
 
 }
+*/

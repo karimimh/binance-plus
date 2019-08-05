@@ -357,5 +357,44 @@ class BinanaceAPI {
 //            print("Candlestick Close")
 //        }
     }
+ 
     
+    
+    static func getAggregateTradesList(symbol: String, fromId: Int64 = -1, startTime: Int64 = -1, endTime: Int64 = -1, limit: Int64 = -1, completion: @escaping ([[String: Any]]?) -> Void) {
+        var url = URLComponents(string: "https://api.binance.com/api/v1/aggTrades")!
+        url.queryItems = [URLQueryItem(name: "symbol", value: symbol)]
+        if fromId != -1 {
+            url.queryItems?.append(URLQueryItem(name: "fromId", value: String(fromId)))
+        }
+        if startTime != -1 || endTime != -1 {
+            url.queryItems?.append(URLQueryItem(name: "startTime", value: String(startTime)))
+            url.queryItems?.append(URLQueryItem(name: "endTime", value: String(endTime)))
+        }
+        if limit != -1 {
+            url.queryItems?.append(URLQueryItem(name: "limit", value: String(limit)))
+        }
+        let request = URLRequest(url: url.url!)
+        
+        let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            guard error == nil else {
+                completion(nil)
+                return
+            }
+            guard let data = data else {
+                completion(nil)
+                return
+            }
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [[String: Any]] {
+                    completion(json)
+                } else {
+                    completion(nil)
+                }
+            } catch {
+                completion(nil)
+            }
+            
+        }
+        task.resume()
+    }
 }

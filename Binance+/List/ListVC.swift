@@ -2,19 +2,19 @@
 //  ListVC.swift
 //  Binance+
 //
-//  Created by Behnam Karimi on 4/28/1398 AP.
+//  Created by Behnam Karimi on 5/1/1398 AP.
 //  Copyright © 1398 AP Behnam Karimi. All rights reserved.
 //
 
 import UIKit
 
-class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UITableViewDataSource, UITableViewDelegate {
-    @IBOutlet weak var tableView: UITableView!
+class ListVC: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UISearchBarDelegate, UISearchResultsUpdating {
+    @IBOutlet weak var collectionView: UICollectionView!
+    var app: App!
     
     //MARK: Properties
     var parentVC: ParentVC!
     var tabBarVC: TabBarVC!
-    var app: App!
     
     var activeList: List! {
         get {
@@ -26,7 +26,6 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
             setEditBarButtonItem()
         }
     }
-    var isScrolling: Bool = false
     var filteredSymbols = [Symbol]() // for when user is searching
     var tableSymbols = [Symbol]()
     let searchController = UISearchController(searchResultsController: nil)
@@ -43,23 +42,18 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
     
     var downloadingPreviewCandles = false
     
-    var timer: Timer!
     
     var miniTickerWebSocket: WebSocket?
-    
-    // MARK: - Initialization
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
+        if let delegate = UIApplication.shared.delegate as? AppDelegate {
+            app = delegate.app
+        }
         
         tabBarVC = (tabBarController as? TabBarVC)
         parentVC = (tabBarVC.parent as? ParentVC)
-        self.app = parentVC.app
-        
-        
-        tableView.tableFooterView = UIView()
-        tableView.allowsSelection = true
-        
         
         chooseListVC = parentVC.leftContainerVC as? ChooseListVC
         chooseListVC.app = self.app
@@ -70,10 +64,10 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
         parentVC.setupLeftContainerGestureRecognizers()
         chooseListVC.listChosenCompletion = {
             self.parentVC.slideLeft()
+            self.collectionView.reloadData()
         }
         
         
-        tableView.tintColor = .yellow
         addSearchControllerToNavBar()
         
         if activeList == nil {
@@ -88,25 +82,17 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
         listBBI = navigationItem.leftBarButtonItem
         sortBBI = navigationItem.rightBarButtonItem
         
-        
+        collectionView.allowsMultipleSelection = true
         self.startPriceStreaming()
-        
-        timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(reloadTableView), userInfo: nil, repeats: true)
-        
     }
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        if timer != nil {
-            timer.invalidate()
-        }
         miniTickerWebSocket?.close()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if timer != nil {
-            timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(reloadTableView), userInfo: nil, repeats: true)
-        }
         miniTickerWebSocket?.open()
     }
     
@@ -118,38 +104,28 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
         }
     }
     
-    @IBAction func reloadTableView() {
-        if !isEditing && !isFiltering() && !isScrolling {
-            tableView.reloadData()
-        }
-    }
     
-    // MARK: - Table view data source
-    
-     func numberOfSections(in tableView: UITableView) -> Int {
-        if app == nil {
-            return 0
-        }
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
         return 1
     }
-    
-     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        if activeList == nil {
+            return 0
+        }
         if app == nil {
             return 0
         }
         if isFiltering() {
             return filteredSymbols.count
-        } else {
-            if activeList != nil {
-                return activeList.symbols.count
-            }
         }
-        return 0
+        return activeList.symbols.count
     }
     
     
-     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Symbol", for: indexPath) as! SymbolTableViewCell
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SymbolCVCell", for: indexPath) as! SymbolCVCell
+
         let symbol: Symbol
         if isFiltering() {
             symbol = filteredSymbols[indexPath.row]
@@ -163,7 +139,6 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
         let price = symbol.price
         let priceChange = symbol.percentChange
         let volume = symbol.btcVolume(app)
-        
         
         
         cell.nameLabel.text = name
@@ -185,10 +160,10 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
         cell.changeLabel.layer.masksToBounds = true
         cell.changeLabel.layer.cornerRadius = 5
         
-        cell.quickChart.app = self.app
-        cell.quickChart.symbol = symbol
-        cell.quickChart.timeframe = .daily
-        cell.quickChart.setNeedsDisplay()
+        cell.previewChart.app = self.app
+        cell.previewChart.symbol = symbol
+        cell.previewChart.timeframe = .daily
+        cell.previewChart.setNeedsDisplay()
         
         if symbol.lastesThirtyDailyCandles == nil {
             DispatchQueue.global(qos: .background).async {
@@ -196,7 +171,7 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
                     if let candles = optionalCandles {
                         symbol.lastesThirtyDailyCandles = candles
                         DispatchQueue.main.async {
-                            cell.quickChart.setNeedsDisplay()
+                            cell.previewChart.setNeedsDisplay()
                         }
                     }
                 })
@@ -213,21 +188,17 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
                 }
             }
         }
+        if cell.isSelected {
+            cell.backgroundColor = UIColor.fromHex(hex: "#3392ff").withAlphaComponent(0.5)
+        } else {
+            cell.backgroundColor = .white
+        }
         return cell
     }
+
     
-     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 80
-    }
-    
-     func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 80
-    }
-    
-    
-    
-     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let cell  = tableView.cellForRow(at: indexPath) as! SymbolTableViewCell
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let cell = collectionView.cellForItem(at: indexPath) as! SymbolCVCell
         guard let symbol = getSymbol(cell.nameLabel.text!) else { return }
         if !isEditing {
             parentVC.slideRightPanGR.isEnabled = false
@@ -236,53 +207,59 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
             }
             tabBarVC.selectedIndex = 1
         } else {
+            cell.backgroundColor = UIColor.fromHex(hex: "#3392ff").withAlphaComponent(0.5)
+            cell.previewChart.setNeedsDisplay()
             if !selectedSymbols.contains(symbol.name) {
                 selectedSymbols.append(symbol.name)
             }
         }
     }
-    
-     func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
-        let cell  = tableView.cellForRow(at: indexPath) as! SymbolTableViewCell
+
+    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
+        let cell = collectionView.cellForItem(at: indexPath) as! SymbolCVCell
         guard let symbol = getSymbol(cell.nameLabel.text!) else { return }
         if selectedSymbols.contains(symbol.name) {
             selectedSymbols.remove(at: selectedSymbols.firstIndex(of: symbol.name)!)
         }
+        cell.backgroundColor = .white
+        cell.previewChart.setNeedsDisplay()
+        
     }
-    
-    
-     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+
+    func collectionView(_ collectionView: UICollectionView, canMoveItemAt indexPath: IndexPath) -> Bool {
         if activeList.isServerList {
             return false
         }
         return true
     }
     
-    
-     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            activeList.symbols.remove(at: indexPath.row)
-            tableView.deleteRows(at: [indexPath], with: .left)
-            app.save()
-        }
+    func collectionView(_ collectionView: UICollectionView, moveItemAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
+        let s = activeList.symbols.remove(at: sourceIndexPath.row)
+        activeList.symbols.insert(s, at: destinationIndexPath.row)
+        collectionView.moveItem(at: sourceIndexPath, to: destinationIndexPath)
+//        needsSorting()
     }
     
     
-     func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
-        return .none
-    }
     
     
     
     override func setEditing(_ editing: Bool, animated: Bool) {
         if editing {
+            if let ips = collectionView.indexPathsForSelectedItems {
+                for ip in ips {
+                    collectionView.deselectItem(at: ip, animated: true)
+                }
+            }
             navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(insertSymbols))
             navigationItem.rightBarButtonItems!.remove(at: 0)
             parentVC.slideRightPanGR.isEnabled = false
-            
-            app.sortBy = .DEFAULT
-            app.sortDirection = .ASCENDING
-            needsSorting()
+            if app.sortBy != .DEFAULT || app.sortDirection != .ASCENDING {
+                app.sortBy = .DEFAULT
+                app.sortDirection = .ASCENDING
+                needsSorting()
+                self.collectionView.reloadData()
+            }
             
             navigationController?.setToolbarHidden(false, animated: true)
             
@@ -293,7 +270,12 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
             navigationController?.toolbar.items = [selectAllNoneBBI, space, deleteSymbolsBBI]
             
         } else {
-            selectedSymbols.removeAll()
+            if let ips = collectionView.indexPathsForSelectedItems {
+                for ip in ips {
+                    collectionView.deselectItem(at: ip, animated: true)
+                }
+            }
+            
             navigationItem.leftBarButtonItem = listBBI
             navigationItem.rightBarButtonItems?.insert(sortBBI, at: 0)
             parentVC.slideRightPanGR.isEnabled = true
@@ -301,51 +283,7 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
             navigationController?.setToolbarHidden(true, animated: true)
         }
         super.setEditing(editing, animated: animated)
-        
-        
     }
-    
-    
-    // MARK: - Reaarange TableView
-     func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-        let s = activeList.symbols.remove(at: fromIndexPath.row)
-        activeList.symbols.insert(s, at: to.row)
-        needsSorting()
-        app.save()
-    }
-    
-     func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        if activeList.isServerList {
-            return false
-        }
-        return true
-    }
-    
-    
-    
-    
-    // MARK: - Scrolling
-     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        isScrolling = true
-    }
-    
-     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        isScrolling = true
-    }
-    
-     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        isScrolling = false
-    }
-     func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
-        if !decelerate {
-            isScrolling = false
-        }
-    }
-     func scrollViewDidScrollToTop(_ scrollView: UIScrollView) {
-        isScrolling = false
-    }
-    
-    
     
     
     // MARK: - Insert Rows
@@ -365,7 +303,7 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
     
     @IBAction func showSortOptionsVC() {
         
-        parentVC.slideUpOptionsChooser(options: SortBy.all(), title: "Sort By", shouldDismissOnSelection: false) { (index) in
+        parentVC.slideUpOptionsChooser(options: SortBy.all(), title: "Sort By", shouldDismissOnSelection: true) { (index) in
             let sortBy = SortBy(rawValue: index)!
             if self.app.sortBy == sortBy {
                 self.app.sortDirection.negate()
@@ -374,10 +312,8 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
                 self.app.sortDirection = .ASCENDING
             }
             self.needsSorting()
+            self.collectionView.reloadData()
         }
-
-//        let vc = storyboard?.instantiateViewController(withIdentifier: "ListVC2") as! ListVC2
-//        parentVC.present(vc, animated: true, completion: nil)
     }
     
     
@@ -400,7 +336,7 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
             }
             return symbol.name.lowercased().contains(searchController.searchBar.text!.lowercased())
         })
-        tableView.reloadData()
+        collectionView.reloadData()
     }
     
     private func isFiltering() -> Bool {
@@ -439,7 +375,7 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
             arr.reverse()
         }
         tableSymbols = arr
-        tableView.reloadData()
+//        collectionView.reloadData()
     }
     
     
@@ -498,21 +434,6 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
     
     
     
-    
-    private func filtered(symbols: [Symbol], with filter: String) -> [Symbol] {
-        if filter.isEmpty {
-            return activeList.getSymbols(app)
-        }
-        let f = filter.uppercased()
-        var result = [Symbol]()
-        for symbol in activeList.getSymbols(app) {
-            if symbol.name.contains(f) {
-                result.append(symbol)
-            }
-        }
-        return result
-    }
-    
     func getList(_ name: String) -> List? {
         for list in app.lists {
             if list.name == name {
@@ -532,29 +453,35 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
     }
     
     @IBAction func deleteSymbols(_ sender: UIBarButtonItem) {
-        if selectedSymbols.isEmpty { return }
-        for symbolName in selectedSymbols {
-            activeList.symbols.remove(at: activeList.symbols.firstIndex(of: symbolName)!)
+//        if selectedSymbols.isEmpty { return }
+//        for symbolName in selectedSymbols {
+//            activeList.symbols.remove(at: activeList.symbols.firstIndex(of: symbolName)!)
+//        }
+        
+        if let ips = collectionView.indexPathsForSelectedItems {
+            for ip in ips {
+                print(ip.row)
+            }
+//            collectionView.deleteItems(at: ips)
         }
-        tableView.deleteRows(at: tableView.indexPathsForSelectedRows!, with: .left)
-        app.save()
+//        collectionView.deleteItems(at: collectionView.indexPathsForSelectedItems!)
+        
+//        for i in 0 ..< collectionView.numberOfItems(inSection: 0) {
+//            collectionView.deselectItem(at: IndexPath(row: i, section: 0), animated: true)
+//        }
+//        selectedSymbols.removeAll()
     }
     
     @IBAction func selectAllOrNone(_ sender: UIBarButtonItem) {
         if selectAllNoneBBI.title == "Select All" {
-            for i in 0 ..< tableView.numberOfRows(inSection: 0) {
-                tableView.selectRow(at: IndexPath(row: i, section: 0), animated: true, scrollPosition: .none)
-            }
-            selectedSymbols.removeAll()
-            for symbol in activeList.symbols {
-                selectedSymbols.append(symbol)
+            for i in 0 ..< collectionView.numberOfItems(inSection: 0) {
+                collectionView.selectItem(at: IndexPath(row: i, section: 0), animated: true, scrollPosition: .top)
             }
             selectAllNoneBBI.title = "Select None"
         } else if selectAllNoneBBI.title == "Select None" {
-            for i in 0 ..< tableView.numberOfRows(inSection: 0) {
-                tableView.deselectRow(at: IndexPath(row: i, section: 0), animated: true)
+            for i in 0 ..< collectionView.numberOfItems(inSection: 0) {
+                collectionView.deselectItem(at: IndexPath(row: i, section: 0), animated: true)
             }
-            selectedSymbols.removeAll()
             selectAllNoneBBI.title = "Select All"
         }
     }
@@ -582,8 +509,45 @@ class ListVC: UIViewController, UISearchBarDelegate, UISearchResultsUpdating, UI
                 let percentChange = 100.0 * (Decimal(string: closePrice)! - Decimal(string: openPrice)!) / Decimal(string: openPrice)!
                 symbol.percentChange = percentChange
             }
-            
+            DispatchQueue.main.async {
+                if self.isEditing || self.isFiltering() {
+                    return
+                }
+                for c in self.collectionView.visibleCells {
+                    let cell = c as! SymbolCVCell
+                    guard let symbol = self.getSymbol(cell.nameLabel.text!) else { continue }
+                    let volume = symbol.btcVolume(self.app)
+                    cell.priceLabel.text = "\(symbol.price)"
+                    cell.changeLabel.text = String(format: "%.2f%%", symbol.percentChange.doubleValue)
+                    if symbol.volume > 10 {
+                        cell.volumeLabel.text = "Volume: " + String(format: "%d", Int(volume.doubleValue)) + " ฿"
+                    } else {
+                        cell.volumeLabel.text = "Volume: " + String(format: "%.2f", volume.doubleValue) + " ฿"
+                    }
+                    
+                    if symbol.percentChange < 0 {
+                        cell.priceLabel.textColor = self.app.bearCandleColor
+                        cell.changeLabel.backgroundColor = self.app.bearCandleColor
+                    } else {
+                        cell.priceLabel.textColor = self.app.bullCandleColor
+                        cell.changeLabel.backgroundColor = self.app.bullCandleColor
+                    }
+                }
+            }
         }
+    }
+    
+
+}
+
+
+// MARK: - Collection View Flow Layout Delegate
+extension ListVC : UICollectionViewDelegateFlowLayout {
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: collectionView.bounds.width, height: 80)
     }
 
 }
+
+

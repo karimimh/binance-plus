@@ -13,7 +13,7 @@
 		A53A784722CE0CF2005975E8 /* FilterButtonTVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784622CE0CF2005975E8 /* FilterButtonTVCell.swift */; };
 		A53A784922CE0E7F005975E8 /* FilterSettingsVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A53A784822CE0E7F005975E8 /* FilterSettingsVC.swift */; };
 		A547403522E7306B00F68A57 /* SymbolCVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547403422E7306B00F68A57 /* SymbolCVCell.swift */; };
-		A547403722E7314500F68A57 /* ListVC2.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547403622E7314500F68A57 /* ListVC2.swift */; };
+		A547403722E7314500F68A57 /* ListVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547403622E7314500F68A57 /* ListVC.swift */; };
 		A547403B22E8632C00F68A57 /* SimpleCVCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547403A22E8632C00F68A57 /* SimpleCVCell.swift */; };
 		A547403D22E864DC00F68A57 /* SlideupSelectorVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547403C22E864DC00F68A57 /* SlideupSelectorVC.swift */; };
 		A547403F22EC3F9D00F68A57 /* BitmexApi.swift in Sources */ = {isa = PBXBuildFile; fileRef = A547403E22EC3F9D00F68A57 /* BitmexApi.swift */; };
@@ -230,7 +230,6 @@
 		A5DD40B022DC6B480004B78C /* storm.png in Resources */ = {isa = PBXBuildFile; fileRef = A5DD400522DC6B480004B78C /* storm.png */; };
 		A5DD40B122DC6B480004B78C /* snt.png in Resources */ = {isa = PBXBuildFile; fileRef = A5DD400622DC6B480004B78C /* snt.png */; };
 		A5DD40B322DC7BBF0004B78C /* PriceLineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5DD40B222DC7BBF0004B78C /* PriceLineView.swift */; };
-		A5E07F7322E24EFC0007C91C /* ListVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5E07F7222E24EFC0007C91C /* ListVC.swift */; };
 		A5F4F000226E2598002EEBD2 /* ParentVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5F4EFFF226E2598002EEBD2 /* ParentVC.swift */; };
 		A5FC7BEB227AFE93004CC6F0 /* IndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */; };
 		A5FC7BED227B0705004CC6F0 /* TimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FC7BEC227B0705004CC6F0 /* TimeView.swift */; };
@@ -253,7 +252,7 @@
 		A53A784622CE0CF2005975E8 /* FilterButtonTVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterButtonTVCell.swift; sourceTree = "<group>"; };
 		A53A784822CE0E7F005975E8 /* FilterSettingsVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterSettingsVC.swift; sourceTree = "<group>"; };
 		A547403422E7306B00F68A57 /* SymbolCVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SymbolCVCell.swift; sourceTree = "<group>"; };
-		A547403622E7314500F68A57 /* ListVC2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListVC2.swift; sourceTree = "<group>"; };
+		A547403622E7314500F68A57 /* ListVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListVC.swift; sourceTree = "<group>"; };
 		A547403A22E8632C00F68A57 /* SimpleCVCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleCVCell.swift; sourceTree = "<group>"; };
 		A547403C22E864DC00F68A57 /* SlideupSelectorVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlideupSelectorVC.swift; sourceTree = "<group>"; };
 		A547403E22EC3F9D00F68A57 /* BitmexApi.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitmexApi.swift; sourceTree = "<group>"; };
@@ -472,7 +471,6 @@
 		A5DD400522DC6B480004B78C /* storm.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = storm.png; sourceTree = "<group>"; };
 		A5DD400622DC6B480004B78C /* snt.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = snt.png; sourceTree = "<group>"; };
 		A5DD40B222DC7BBF0004B78C /* PriceLineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PriceLineView.swift; sourceTree = "<group>"; };
-		A5E07F7222E24EFC0007C91C /* ListVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListVC.swift; sourceTree = "<group>"; };
 		A5F4EFFF226E2598002EEBD2 /* ParentVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParentVC.swift; sourceTree = "<group>"; };
 		A5FC7BEA227AFE93004CC6F0 /* IndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndicatorView.swift; sourceTree = "<group>"; };
 		A5FC7BEC227B0705004CC6F0 /* TimeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeView.swift; sourceTree = "<group>"; };
@@ -544,7 +542,7 @@
 		A55ECBD122D737A700C2288A /* List */ = {
 			isa = PBXGroup;
 			children = (
-				A5E07F7222E24EFC0007C91C /* ListVC.swift */,
+				A547403622E7314500F68A57 /* ListVC.swift */,
 				A5BE57662268F21200E4EE09 /* SortOptionsVC.swift */,
 				A56B86D3226C713D003B153B /* ChooseListVC.swift */,
 				A5B1DCDE226F809D0084B82D /* CreateListVC.swift */,
@@ -583,7 +581,6 @@
 				A55ECBD022D736ED00C2288A /* Scanner */,
 				A5630BD62237D16F002B0152 /* AppDelegate.swift */,
 				A5630BDA2237D16F002B0152 /* Main.storyboard */,
-				A547403622E7314500F68A57 /* ListVC2.swift */,
 				A589D8832258A9C2008C98C3 /* LaunchVC.swift */,
 				A5F4EFFF226E2598002EEBD2 /* ParentVC.swift */,
 				A5630BD82237D16F002B0152 /* TabBarVC.swift */,
@@ -1139,13 +1136,12 @@
 				A53A784522CE0CD0005975E8 /* FilterTFTVCell.swift in Sources */,
 				A5630BEF2237F083002B0152 /* Symbol.swift in Sources */,
 				A5F4F000226E2598002EEBD2 /* ParentVC.swift in Sources */,
-				A5E07F7322E24EFC0007C91C /* ListVC.swift in Sources */,
 				A5FC7BFB22830F3F004CC6F0 /* Indicators.swift in Sources */,
 				A5DD3F5A22DB41320004B78C /* CrosshairView.swift in Sources */,
 				A5BE57652268EAE500E4EE09 /* SortOptionTVCell.swift in Sources */,
 				A5BE575E2268C0B700E4EE09 /* ListTitleView.swift in Sources */,
 				A5BE57672268F21200E4EE09 /* SortOptionsVC.swift in Sources */,
-				A547403722E7314500F68A57 /* ListVC2.swift in Sources */,
+				A547403722E7314500F68A57 /* ListVC.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
