@@ -36,4 +36,6 @@ class BitmexAPI: NSObject {
         task.resume()
     }
     
+    
+    
 }

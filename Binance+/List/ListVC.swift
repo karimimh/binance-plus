@@ -320,10 +320,8 @@ class ListVC: UIViewController, UICollectionViewDelegate, UICollectionViewDataSo
     
     
     // MARK: - Choose List
-    
     @IBAction func chooseList(_ sender: UIBarButtonItem) {
         parentVC.slideRight()
-        
     }
     
     
