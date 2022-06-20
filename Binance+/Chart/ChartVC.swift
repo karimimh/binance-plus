@@ -95,9 +95,9 @@ class ChartVC: UIViewController {
         rightContainer.layer.insertSublayer(rightContainerShadowLayer, at: 0)
         
         
-        
+
         let navBar = navigationController!.navigationBar
-        
+
         navBarShadowLayer = CAShapeLayer()
         navBarShadowLayer.path = UIBezierPath(rect: navBar.bounds).cgPath
         navBarShadowLayer.shadowColor = UIColor.gray.cgColor
@@ -105,8 +105,8 @@ class ChartVC: UIViewController {
         navBarShadowLayer.shadowOffset = CGSize(width: 0.0, height: 1.0)
         navBarShadowLayer.shadowOpacity = 0.75
         navBarShadowLayer.shadowRadius = 5
-        
-        navBar.layer.insertSublayer(navBarShadowLayer, at: 0)
+
+//        navBar.layer.insertSublayer(navBarShadowLayer, at: 0)
         
         
         if let navC = storyboard?.instantiateViewController(withIdentifier: "IndicatorsNavController") as? UINavigationController {
