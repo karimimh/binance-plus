@@ -1,5 +1,5 @@
 # Binance-
-A nice representation of Binance exchange with search utilities over tokens.
+A nice representation of Binance exchange with search utilities over tokens (the searches happen in the front end. there's no server!).
 The primary purpose of posting this to GitHub is for personal use.
 
 Below you can find some pictures of my app:
